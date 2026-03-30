@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace _02_TimeSpace_Complexity; 
 
-
 public class ConstantTime 
 {
     public void SessionCacheExample() 
@@ -20,4 +19,4 @@ public class ConstantTime
 
         WriteLine(GetSession("abc123"));
     }
-}
+} 
