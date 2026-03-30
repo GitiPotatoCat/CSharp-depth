@@ -9,7 +9,7 @@ public class QuadraticTime
         // Scenario: Finding the exact server name from a large pool of servers where each server has 1 to n number of jobs
         var jobName = "C# docker auth running"; 
 
-        var servers = new List<List<String>> 
+        var servers = new List<List<string>> 
         {
             new List<string> { "Python backup job running ",    "Node Auth Service",    "Java DB Migrator" }, 
             new List<string> { "GO API Gateway",    "C# Arc CPU x86 running ",  "C# docker auth running" }, 

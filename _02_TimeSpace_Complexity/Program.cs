@@ -10,11 +10,12 @@ public class Program
         ConstantTime cT = new(); 
         LinearTime lT = new(); 
         QuadraticTime qT = new(); 
+        LogarithimicTime logT = new(); 
 
-        WriteLine("---Constant Time O(1)---");
+        WriteLine("\n---Constant Time O(1)---");
         cT.SessionCacheExample();
         
-        WriteLine("---Liear Time O(n)---");
+        WriteLine("\n---Liear Time O(n)---");
         var logs = new string[]
         {
             "INFO Application started",
@@ -26,7 +27,10 @@ public class Program
         if (result != null) WriteLine($"First error found: {result}");
         else WriteLine("No errors found."); 
 
-        WriteLine("---Quadratic Time (O^2)---"); 
-        qT.QTExample();
+        WriteLine("\n---Quadratic Time (O^2)---"); 
+        qT.QTExample(); 
+
+        WriteLine("\n---Logarithmic Time O(log n)"); 
+        logT.LogTExample(); 
     }
 }
