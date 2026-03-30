@@ -28,9 +28,14 @@ public class Program
         else WriteLine("No errors found."); 
 
         WriteLine("\n---Quadratic Time (O^2)---"); 
-        qT.QTExample(); 
+        qT.QTExample();  
+        WriteLine(new string('-', 20)); 
+        qT.QTExample2(); 
 
         WriteLine("\n---Logarithmic Time O(log n)"); 
         logT.LogTExample(); 
+
+        WriteLine("\n---Quadratic Time O(2^n)---"); 
+
     }
 }
