@@ -39,6 +39,11 @@ public class Program
         WriteLine("\n---Exponential Time O(2^n)---"); 
         eT.ExpoExample(); 
 
-        
+        WriteLine(new string('=', 45)); 
+        WriteLine("\n\nSpace Complexity"); 
+        SpaceComplexity spaceComplexity = new(); 
+
+        WriteLine("---Constant Time---"); 
+        spaceComplexity.ConstantSpaceExample();
     }
 }
