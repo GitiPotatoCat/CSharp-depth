@@ -11,6 +11,7 @@ public class Program
         LinearTime lT = new(); 
         QuadraticTime qT = new(); 
         LogarithimicTime logT = new(); 
+        ExponentialExample eT = new(); 
 
         WriteLine("\n---Constant Time O(1)---");
         cT.SessionCacheExample();
@@ -35,7 +36,9 @@ public class Program
         WriteLine("\n---Logarithmic Time O(log n)"); 
         logT.LogTExample(); 
 
-        WriteLine("\n---Quadratic Time O(2^n)---"); 
+        WriteLine("\n---Exponential Time O(2^n)---"); 
+        eT.ExpoExample(); 
 
+        
     }
 }
