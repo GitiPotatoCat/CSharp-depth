@@ -44,5 +44,53 @@ public class SpaceComplexity
         WriteLine($"Lowest Salary: {minSalary:N2}"); 
         WriteLine($"Highest Salary: {maxSalary:N2}"); 
         WriteLine($"Salary Range: {(maxSalary - minSalary):N2}"); 
+    } 
+
+
+    // Scenario: A company has a list of employees with salaries. 
+    //  Filter out ONLY the high earning employees (above threshold) 
+    //  into a NEW list -> O(n) Space 
+    public void LinearSpaceExample() 
+    {
+        var employees = new List<(string Name, double Salary)> 
+        {
+            ("Anil", 45000.00), 
+            ("Binod", 82000.00), 
+            ("Chachundar", 38000.00), 
+            ("Dravir", 95000.00), 
+            ("Eve", 71000), 
+            ("Frank", 55000.00), 
+            ("Golu", 88000.00)
+        }; 
+
+        double threshold = 70000.00; 
+
+        WriteLine($"Filtering employees with salary above {threshold:N2}"); 
+        WriteLine(new string('-', 50)); 
+
+        var highEarners = FilterHighEarners(employees, threshold); 
+
+        foreach (var emp in highEarners) WriteLine($"{emp.Name, -10} -> {emp.Salary:N2}"); 
+
+        WriteLine(new string('-', 50)); 
+        WriteLine($"Total high earners found: {highEarners.Count} out of {employees.Count}"); 
+    } 
+
+
+    // O(n) Space - a NEW list is created that can grow 
+    // up to the same size as the input list 
+    private List<(string Name, double Salary)> FilterHighEarners(
+        List<(string Name, double Salary)> employees, 
+        double threshold
+    ) 
+    {
+        var highEarners = new List<(string Name, double Salary)>(); 
+
+        for (int i=0; i<employees.Count; i++) 
+        {
+            if (employees[i].Salary > threshold) highEarners.Add(employees[i]); 
+        } 
+
+        return highEarners; 
     }
 }

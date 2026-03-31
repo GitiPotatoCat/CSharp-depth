@@ -40,10 +40,15 @@ public class Program
         eT.ExpoExample(); 
 
         WriteLine(new string('=', 45)); 
+
+
         WriteLine("\n\nSpace Complexity"); 
         SpaceComplexity spaceComplexity = new(); 
 
-        WriteLine("---Constant Time---"); 
-        spaceComplexity.ConstantSpaceExample();
+        WriteLine("---Constant Space Time---"); 
+        spaceComplexity.ConstantSpaceExample(); 
+
+        WriteLine("---Linear Space Time---"); 
+        spaceComplexity.LinearSpaceExample(); 
     }
 }
