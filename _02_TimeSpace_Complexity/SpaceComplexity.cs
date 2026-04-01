@@ -92,5 +92,123 @@ public class SpaceComplexity
         } 
 
         return highEarners; 
+    } 
+
+
+
+    // Scenario: An event venue needs a seating chart. 
+    //  Given n rows and n seats per row, 
+    //  we build a full 2D grid to track every seat -> O(n^2) Space 
+
+    public void QuadraticSpaceExample() 
+    {
+        int n = 4;      // 4 rows x 4 seats = 16 seats 
+
+        WriteLine($"Building seating-chart for {n} rows x {n} seats:"); 
+        WriteLine(new string('-', 45)); 
+
+        string[,] seatingChart = BuildingSeatingChart(n); 
+
+        PrintSeatingChart(seatingChart, n); 
+
+        WriteLine(new string('-', 45)); 
+        WriteLine($"Total seats in memory: {n} x {n} = {n * n} (n²) = {n}² = {n * n}");
+    } 
+
+    // O(n²) Space 
+    private string[,] BuildingSeatingChart(int n) 
+    {
+        var seatingChart = new string[n, n]; 
+
+        for (int row = 0; row < n; row++) 
+        {
+            for (int seat = 0; seat < n; seat++) 
+            {
+                // Each cell occupies a slot in memory 
+                seatingChart[row, seat] = $"G{row + 1}{seat + 1}"; 
+            }
+        }
+
+        return seatingChart; 
+    }
+
+
+    // Helper: print the seating chart grid 
+    private void PrintSeatingChart(string[,] chart, int n) 
+    {
+        WriteLine("     Seat1       Seat2       Seat3       Seat4"); 
+        for (int row = 0; row < n; row++) 
+        {
+            Write($"Row {row + 1} | "); 
+            for (int seat = 0; seat < n; seat++) 
+            {
+                Write($"{chart[row, seat], -8}"); 
+            }
+            WriteLine();
+        }
+    } 
+
+
+
+    // Scenario: A sorted dictionary has thousands of words. 
+    //  We use RECURSIVE Binary Search to find a word. 
+    //  Each recursive call adds 1 stack frame to memory + O(log n) Space 
+    public void LogarithmicSpaceExample() 
+    {
+        var dictionary = new List<string> 
+        {
+            "Apple", 
+            "Banana", 
+            "Cherry", 
+            "Dragon", 
+            "Elephant", 
+            "Falcon", 
+            "Grape", 
+            "Horizon", 
+            "Igloo", 
+            "Jungle" 
+        };
+
+        var targetWord = "Falcon"; 
+
+        WriteLine($"Searching dictionary for: {targetWord}"); 
+        WriteLine(new string('-', 45)); 
+
+        int resultIndex = FindWord(dictionary, targetWord, 0, dictionary.Count - 1, 1); 
+
+        if (resultIndex != -1) WriteLine($"\n '{targetWord}' found at position {resultIndex + 1} in dictionary."); 
+        else WriteLine($"\n '{targetWord}' not found in dictionary."); 
+
+        WriteLine(new string('-', 45)); 
+        WriteLine($"Max stack frames used: -{(int)Math.Ceiling(Math.Log(dictionary.Count))} (log2 {dictionary.Count} = {Math.Log(dictionary.Count):F1})"); 
+    } 
+
+    // O(log n) Space - each recursive call adds 1 frame to the call stack 
+    // stack depth never exceeds log2(n) frames at any point 
+    private int FindWord(
+        List<string> dictionary, 
+        string targetWord, 
+        int left, 
+        int right, 
+        int depth
+    ) 
+    {
+        // Base case: search space exhausted -> pop stack frame 
+        if (left > right) return -1; 
+
+        int mid = left + (right - left) / 2; 
+
+        WriteLine($"    Stack Frame {depth}: checking '{dictionary[mid]}' (left={left}, right={right})"); 
+
+        int comparison = string.Compare(dictionary[mid], targetWord, StringComparison.Ordinal); 
+
+        if (comparison == 0) return mid; 
+        else if (comparison < 0) {
+            WriteLine($"    {targetWord} comes AFTER -> go RIGHT"); 
+            return FindWord(dictionary, targetWord, mid+1, right, depth+1); 
+        } else {
+            WriteLine($"    '{targetWord}' comes BEFORE -> go LEFT"); 
+            return FindWord(dictionary, targetWord, left, mid -1, depth + 1);
+        }
     }
 }

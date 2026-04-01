@@ -45,10 +45,16 @@ public class Program
         WriteLine("\n\nSpace Complexity"); 
         SpaceComplexity spaceComplexity = new(); 
 
-        WriteLine("---Constant Space Time---"); 
+        WriteLine("\n---Constant Space---"); 
         spaceComplexity.ConstantSpaceExample(); 
 
-        WriteLine("---Linear Space Time---"); 
+        WriteLine("\n---Linear Space---"); 
         spaceComplexity.LinearSpaceExample(); 
+
+        WriteLine("\n---Quadratic Space---"); 
+        spaceComplexity.QuadraticSpaceExample(); 
+
+        WriteLine("\n---Logarithmic Space---"); 
+        spaceComplexity.LogarithmicSpaceExample();
     }
 }
