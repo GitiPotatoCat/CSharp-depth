@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>csref — C# Data Structures Reference</title>
-<meta name="description" content="A clean, topic-first reference for C# data structures in .NET 10 / C# 14. Inspired by Microsoft Learn." />
+<title>Array — csref</title>
+<meta name="description" content="System.Array — fixed-size, zero-indexed, strongly typed collection. Reference for .NET 10 / C# 14." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&family=IBM+Plex+Serif:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
@@ -13,7 +13,6 @@
    Design tokens
    ───────────────────────────────────────────────────────────── */
 :root {
-  /* Brand — indigo */
   --indigo-500: #4F46E5;
   --indigo-600: #3730A3;
   --indigo-400: #6366F1;
@@ -22,7 +21,6 @@
   --indigo-bg-2:#F0F4FF;
   --indigo-bg-3:#F5F3FF;
 
-  /* Namespace accents */
   --ns-primitive:    #4F46E5;
   --ns-primitive-bg: #EEF2FF;
   --ns-generic:      #6366F1;
@@ -34,7 +32,6 @@
   --ns-immutable:    #D97706;
   --ns-immutable-bg: #FFF7ED;
 
-  /* Neutrals */
   --fg:          #111827;
   --fg-muted:    #6B7280;
   --fg-subtle:   #9CA3AF;
@@ -43,7 +40,6 @@
   --border:      #E5E7EB;
   --border-soft: #F3F4F6;
 
-  /* Code surface */
   --code-bg:   #1E1B4B;
   --code-fg:   #E0E7FF;
   --code-kw:   #818CF8;
@@ -52,12 +48,10 @@
   --code-cmt:  #6B7280;
   --code-num:  #F9A8D4;
 
-  /* Radii */
   --r-sm: 4px;
   --r-md: 8px;
   --r-lg: 12px;
 
-  /* Type */
   --sans:  "IBM Plex Sans", system-ui, sans-serif;
   --mono:  "IBM Plex Mono", ui-monospace, Menlo, monospace;
   --serif: "IBM Plex Serif", Georgia, serif;
@@ -113,7 +107,6 @@ a { color: inherit; text-decoration: none; }
   min-height: 100vh;
 }
 
-/* Sidebar */
 .sidebar {
   position: fixed;
   top: 0; left: 0; bottom: 0;
@@ -125,17 +118,14 @@ a { color: inherit; text-decoration: none; }
   z-index: 10;
 }
 .brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display: flex; align-items: center; gap: 10px;
   padding: 0 20px 20px;
 }
 .brand .mono {
   width: 26px; height: 26px;
   display: grid; place-items: center;
   font-family: var(--mono);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 13px; font-weight: 500;
   color: var(--indigo-500);
   background: var(--indigo-bg);
   border-radius: var(--r-sm);
@@ -151,8 +141,7 @@ a { color: inherit; text-decoration: none; }
 .nav-group { padding: 0 12px; margin-top: 18px; }
 .nav-label {
   font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 400;
+  font-size: 10px; font-weight: 400;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--fg-subtle);
@@ -203,7 +192,6 @@ a { color: inherit; text-decoration: none; }
   line-height: 1.5;
 }
 
-/* Main */
 .main {
   grid-column: 2;
   padding: 56px 48px 80px;
@@ -222,8 +210,7 @@ a { color: inherit; text-decoration: none; }
 }
 .badge {
   font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 400;
+  font-size: 10px; font-weight: 400;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 3px 8px;
@@ -314,7 +301,7 @@ h2.section-title {
   font-size: 14px;
   color: var(--fg-muted);
   line-height: 1.7;
-  border-left: 3px solid var(--ns-generic);
+  border-left: 3px solid var(--ns-primitive);
   padding: 2px 0 2px 14px;
   margin: 0;
 }
@@ -424,7 +411,7 @@ td.desc {
     <div class="nav-group">
       <div class="nav-label"><span class="dot primitive"></span>Array / Span / Memory</div>
       <ul class="nav-list">
-        <li class="nav-item"><a href="docs/arrays.html">Array</a></li>
+        <li class="nav-item active"><a href="arrays.html">Array</a></li>
         <li class="nav-item"><a href="span.html">Span&lt;T&gt;</a></li>
         <li class="nav-item"><a href="memory.html">Memory&lt;T&gt;</a></li>
       </ul>
@@ -438,7 +425,7 @@ td.desc {
         <li class="nav-item"><a href="stack.html">Stack&lt;T&gt;</a></li>
         <li class="nav-item"><a href="queue.html">Queue&lt;T&gt;</a></li>
         <li class="nav-item"><a href="priority-queue.html">PriorityQueue&lt;T,P&gt;</a></li>
-        <li class="nav-item active"><a href="index.html">Dictionary&lt;K,V&gt;</a></li>
+        <li class="nav-item"><a href="index.html">Dictionary&lt;K,V&gt;</a></li>
         <li class="nav-item"><a href="sorted-dictionary.html">SortedDictionary&lt;K,V&gt;</a></li>
         <li class="nav-item"><a href="sorted-list.html">SortedList&lt;K,V&gt;</a></li>
         <li class="nav-item"><a href="hashset.html">HashSet&lt;T&gt;</a></li>
@@ -498,14 +485,15 @@ td.desc {
       <!-- Hero -->
       <header class="hero">
         <div class="badges">
-          <span class="badge ns-generic">System.Collections.Generic</span>
+          <span class="badge ns-primitive">System</span>
           <span class="badge">.NET 10</span>
           <span class="badge warn">Not thread-safe</span>
-          <span class="badge">Mutable</span>
+          <span class="badge">Fixed size</span>
+          <span class="badge">Reference type</span>
         </div>
-        <h1 class="display">Dictionary&lt;TKey,&nbsp;TValue&gt;</h1>
+        <h1 class="display">Array</h1>
         <p class="hero-lead">
-          A hash-based collection of key-value pairs. Average O(1) lookup, insert, and delete — the default choice when you need to find values by a unique key.
+          The base class for all arrays in .NET. Fixed-size, zero-indexed, and strongly typed — the fastest contiguous memory structure for indexed access. Every array in C# (like <code style="font-family:var(--mono);font-size:13px;">int[]</code> or <code style="font-family:var(--mono);font-size:13px;">string[,]</code>) ultimately derives from <code style="font-family:var(--mono);font-size:13px;">System.Array</code>.
         </p>
       </header>
 
@@ -514,17 +502,17 @@ td.desc {
         <div class="metric">
           <div class="label">Lookup</div>
           <div class="value">O(1)</div>
-          <div class="note">average, hash-based</div>
+          <div class="note">direct index access</div>
         </div>
         <div class="metric">
           <div class="label">Insert</div>
-          <div class="value">O(1)</div>
-          <div class="note">amortized, may resize</div>
+          <div class="value">O(n)</div>
+          <div class="note">requires resize and copy</div>
         </div>
         <div class="metric">
           <div class="label">Delete</div>
-          <div class="value">O(1)</div>
-          <div class="note">by key</div>
+          <div class="value">O(n)</div>
+          <div class="note">requires shifting elements</div>
         </div>
       </div>
 
@@ -532,29 +520,36 @@ td.desc {
       <section>
         <h2 class="section-title">When to use</h2>
         <p class="when-use">
-          Reach for Dictionary when you need fast lookups by a unique key and insertion order does not matter. It is the standard map type in .NET — choose SortedDictionary only when ordered traversal is required, and ConcurrentDictionary only when multiple threads write to the same map.
+          Use an array when the number of elements is known up front and will not change, and when you need the fastest possible indexed access with minimal memory overhead. Prefer List&lt;T&gt; when the size is dynamic, Span&lt;T&gt; when you want to slice without allocating, and ImmutableArray&lt;T&gt; when the contents must never be mutated after creation.
         </p>
       </section>
 
       <!-- Code example -->
       <section>
         <h2 class="section-title">Example</h2>
-        <div class="code"><pre><span class="kw">var</span> users = <span class="kw">new</span> <span class="ty">Dictionary</span>&lt;<span class="ty">int</span>, <span class="ty">string</span>&gt;
-{
-    [<span class="num">1</span>] = <span class="str">"Alice"</span>,
-    [<span class="num">2</span>] = <span class="str">"Bob"</span>,
-    [<span class="num">3</span>] = <span class="str">"Carol"</span>
-};
+        <div class="code"><pre><span class="cmt">// Single-dimensional array</span>
+<span class="ty">int</span>[] numbers = { <span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>, <span class="num">40</span>, <span class="num">50</span> };
 
-<span class="cmt">// O(1) average lookup</span>
-<span class="kw">if</span> (users.TryGetValue(<span class="num">2</span>, <span class="kw">out</span> <span class="kw">var</span> name))
-    <span class="ty">Console</span>.WriteLine(name);
+<span class="cmt">// O(1) indexed access</span>
+<span class="ty">int</span> first = numbers[<span class="num">0</span>];
+<span class="ty">int</span> last  = numbers[^<span class="num">1</span>];          <span class="cmt">// index from end</span>
 
-<span class="cmt">// Safe add — throws on duplicate key</span>
-users.Add(<span class="num">4</span>, <span class="str">"Dan"</span>);
+<span class="cmt">// Range slicing (returns a new array)</span>
+<span class="ty">int</span>[] middle = numbers[<span class="num">1</span>..<span class="num">4</span>];
 
-<span class="cmt">// Upsert pattern</span>
-users[<span class="num">4</span>] = <span class="str">"Daniel"</span>;</pre></div>
+<span class="cmt">// Search and sort (static helpers)</span>
+<span class="ty">Array</span>.Sort(numbers);
+<span class="ty">int</span> idx = <span class="ty">Array</span>.BinarySearch(numbers, <span class="num">30</span>);
+
+<span class="cmt">// Multi-dimensional</span>
+<span class="ty">int</span>[,] grid = <span class="kw">new</span> <span class="ty">int</span>[<span class="num">3</span>, <span class="num">3</span>];
+grid[<span class="num">1</span>, <span class="num">2</span>] = <span class="num">42</span>;
+
+<span class="cmt">// Jagged (array of arrays)</span>
+<span class="ty">int</span>[][] jagged = [[<span class="num">1</span>, <span class="num">2</span>], [<span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>], [<span class="num">6</span>]];
+
+<span class="cmt">// Resize — returns a new array, old one is discarded</span>
+<span class="ty">Array</span>.Resize(<span class="kw">ref</span> numbers, <span class="num">10</span>);</pre></div>
       </section>
 
       <!-- Properties -->
@@ -567,29 +562,39 @@ users[<span class="num">4</span>] = <span class="str">"Daniel"</span>;</pre></di
             </thead>
             <tbody>
               <tr>
-                <td class="mono">Count</td>
+                <td class="mono">Length</td>
                 <td class="mono">int</td>
-                <td class="desc">Number of key-value pairs contained in the dictionary.</td>
+                <td class="desc">Total number of elements in all dimensions.</td>
               </tr>
               <tr>
-                <td class="mono">Keys</td>
-                <td class="mono">KeyCollection</td>
-                <td class="desc">A collection containing the keys.</td>
+                <td class="mono">LongLength</td>
+                <td class="mono">long</td>
+                <td class="desc">Total element count as a 64-bit integer. Used for very large arrays.</td>
               </tr>
               <tr>
-                <td class="mono">Values</td>
-                <td class="mono">ValueCollection</td>
-                <td class="desc">A collection containing the values.</td>
+                <td class="mono">Rank</td>
+                <td class="mono">int</td>
+                <td class="desc">Number of dimensions. Returns 1 for a vector, 2 for a matrix, and so on.</td>
               </tr>
               <tr>
-                <td class="mono">Comparer</td>
-                <td class="mono">IEqualityComparer&lt;TKey&gt;</td>
-                <td class="desc">The equality comparer used to compare keys.</td>
+                <td class="mono">IsFixedSize</td>
+                <td class="mono">bool</td>
+                <td class="desc">Always true — arrays cannot be resized in place.</td>
               </tr>
               <tr>
-                <td class="mono">this[TKey]</td>
-                <td class="mono">TValue</td>
-                <td class="desc">Gets or sets the value associated with the specified key.</td>
+                <td class="mono">IsReadOnly</td>
+                <td class="mono">bool</td>
+                <td class="desc">Always false for standard arrays. May be true for read-only wrappers.</td>
+              </tr>
+              <tr>
+                <td class="mono">IsSynchronized</td>
+                <td class="mono">bool</td>
+                <td class="desc">Whether access is thread-safe. Always false for raw arrays.</td>
+              </tr>
+              <tr>
+                <td class="mono">SyncRoot</td>
+                <td class="mono">object</td>
+                <td class="desc">Object used to synchronize access for legacy locking patterns.</td>
               </tr>
             </tbody>
           </table>
@@ -606,39 +611,143 @@ users[<span class="num">4</span>] = <span class="str">"Daniel"</span>;</pre></di
             </thead>
             <tbody>
               <tr>
-                <td class="mono">Add</td>
-                <td class="mono">Add(TKey, TValue)</td>
-                <td class="mono">O(1) avg</td>
+                <td class="mono">GetValue</td>
+                <td class="mono">GetValue(int) → object?</td>
+                <td class="mono">O(1)</td>
               </tr>
               <tr>
-                <td class="mono">TryAdd</td>
-                <td class="mono">TryAdd(TKey, TValue) → bool</td>
-                <td class="mono">O(1) avg</td>
+                <td class="mono">SetValue</td>
+                <td class="mono">SetValue(object?, int)</td>
+                <td class="mono">O(1)</td>
               </tr>
               <tr>
-                <td class="mono">Remove</td>
-                <td class="mono">Remove(TKey) → bool</td>
-                <td class="mono">O(1) avg</td>
+                <td class="mono">GetLength</td>
+                <td class="mono">GetLength(int) → int</td>
+                <td class="mono">O(1)</td>
               </tr>
               <tr>
-                <td class="mono">ContainsKey</td>
-                <td class="mono">ContainsKey(TKey) → bool</td>
-                <td class="mono">O(1) avg</td>
+                <td class="mono">Clone</td>
+                <td class="mono">Clone() → object</td>
+                <td class="mono">O(n)</td>
               </tr>
               <tr>
-                <td class="mono">TryGetValue</td>
-                <td class="mono">TryGetValue(TKey, out TValue) → bool</td>
-                <td class="mono">O(1) avg</td>
+                <td class="mono">CopyTo</td>
+                <td class="mono">CopyTo(Array, int)</td>
+                <td class="mono">O(n)</td>
+              </tr>
+              <tr>
+                <td class="mono">Copy</td>
+                <td class="mono">Array.Copy(Array, Array, int)</td>
+                <td class="mono">O(n)</td>
               </tr>
               <tr>
                 <td class="mono">Clear</td>
-                <td class="mono">Clear()</td>
+                <td class="mono">Array.Clear(Array, int, int)</td>
                 <td class="mono">O(n)</td>
               </tr>
               <tr>
-                <td class="mono">EnsureCapacity</td>
-                <td class="mono">EnsureCapacity(int) → int</td>
+                <td class="mono">Resize</td>
+                <td class="mono">Array.Resize&lt;T&gt;(ref T[], int)</td>
                 <td class="mono">O(n)</td>
+              </tr>
+              <tr>
+                <td class="mono">Sort</td>
+                <td class="mono">Array.Sort&lt;T&gt;(T[])</td>
+                <td class="mono">O(n log n)</td>
+              </tr>
+              <tr>
+                <td class="mono">Reverse</td>
+                <td class="mono">Array.Reverse(Array)</td>
+                <td class="mono">O(n)</td>
+              </tr>
+              <tr>
+                <td class="mono">IndexOf</td>
+                <td class="mono">Array.IndexOf&lt;T&gt;(T[], T) → int</td>
+                <td class="mono">O(n)</td>
+              </tr>
+              <tr>
+                <td class="mono">LastIndexOf</td>
+                <td class="mono">Array.LastIndexOf&lt;T&gt;(T[], T) → int</td>
+                <td class="mono">O(n)</td>
+              </tr>
+              <tr>
+                <td class="mono">BinarySearch</td>
+                <td class="mono">Array.BinarySearch&lt;T&gt;(T[], T) → int</td>
+                <td class="mono">O(log n)</td>
+              </tr>
+              <tr>
+                <td class="mono">Find</td>
+                <td class="mono">Array.Find&lt;T&gt;(T[], Predicate&lt;T&gt;) → T?</td>
+                <td class="mono">O(n)</td>
+              </tr>
+              <tr>
+                <td class="mono">FindAll</td>
+                <td class="mono">Array.FindAll&lt;T&gt;(T[], Predicate&lt;T&gt;) → T[]</td>
+                <td class="mono">O(n)</td>
+              </tr>
+              <tr>
+                <td class="mono">Exists</td>
+                <td class="mono">Array.Exists&lt;T&gt;(T[], Predicate&lt;T&gt;) → bool</td>
+                <td class="mono">O(n)</td>
+              </tr>
+              <tr>
+                <td class="mono">TrueForAll</td>
+                <td class="mono">Array.TrueForAll&lt;T&gt;(T[], Predicate&lt;T&gt;) → bool</td>
+                <td class="mono">O(n)</td>
+              </tr>
+              <tr>
+                <td class="mono">ConvertAll</td>
+                <td class="mono">Array.ConvertAll&lt;T,U&gt;(T[], Converter&lt;T,U&gt;) → U[]</td>
+                <td class="mono">O(n)</td>
+              </tr>
+              <tr>
+                <td class="mono">ForEach</td>
+                <td class="mono">Array.ForEach&lt;T&gt;(T[], Action&lt;T&gt;)</td>
+                <td class="mono">O(n)</td>
+              </tr>
+              <tr>
+                <td class="mono">AsReadOnly</td>
+                <td class="mono">Array.AsReadOnly&lt;T&gt;(T[]) → ReadOnlyCollection&lt;T&gt;</td>
+                <td class="mono">O(1)</td>
+              </tr>
+              <tr>
+                <td class="mono">Fill</td>
+                <td class="mono">Array.Fill&lt;T&gt;(T[], T)</td>
+                <td class="mono">O(n)</td>
+              </tr>
+              <tr>
+                <td class="mono">Empty</td>
+                <td class="mono">Array.Empty&lt;T&gt;() → T[]</td>
+                <td class="mono">O(1)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Multi-dimensional note -->
+      <section>
+        <h2 class="section-title">Array shapes</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Shape</th><th>Syntax</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">Single-dimensional</td>
+                <td class="mono">int[]</td>
+                <td class="desc">The most common form. Zero-indexed vector of elements.</td>
+              </tr>
+              <tr>
+                <td class="mono">Multi-dimensional</td>
+                <td class="mono">int[,] · int[,,]</td>
+                <td class="desc">Rectangular grid stored as a single contiguous block of memory.</td>
+              </tr>
+              <tr>
+                <td class="mono">Jagged</td>
+                <td class="mono">int[][]</td>
+                <td class="desc">An array of arrays — each inner row can have a different length.</td>
               </tr>
             </tbody>
           </table>
@@ -649,12 +758,11 @@ users[<span class="num">4</span>] = <span class="str">"Daniel"</span>;</pre></di
       <section>
         <h2 class="section-title">Related structures</h2>
         <div class="chips">
-          <a class="chip" href="sorted-dictionary.html">SortedDictionary&lt;K,V&gt;</a>
-          <a class="chip" href="sorted-list.html">SortedList&lt;K,V&gt;</a>
-          <a class="chip" href="hashset.html">HashSet&lt;T&gt;</a>
-          <a class="chip" href="concurrent-dictionary.html">ConcurrentDictionary</a>
-          <a class="chip" href="immutable-dictionary.html">ImmutableDictionary</a>
-          <a class="chip" href="hashtable.html">Hashtable</a>
+          <a class="chip" href="span.html">Span&lt;T&gt;</a>
+          <a class="chip" href="memory.html">Memory&lt;T&gt;</a>
+          <a class="chip" href="list.html">List&lt;T&gt;</a>
+          <a class="chip" href="immutable-array.html">ImmutableArray&lt;T&gt;</a>
+          <a class="chip" href="arraylist.html">ArrayList</a>
         </div>
       </section>
 
