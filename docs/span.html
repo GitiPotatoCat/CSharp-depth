@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>csref — C# Data Structures Reference</title>
-<meta name="description" content="A clean, topic-first reference for C# data structures in .NET 10 / C# 14. Inspired by Microsoft Learn." />
+<title>Span&lt;T&gt; — csref</title>
+<meta name="description" content="System.Span<T> — stack-allocated memory slice with no heap allocation. Reference for .NET 10 / C# 14." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&family=IBM+Plex+Serif:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
@@ -13,7 +13,6 @@
    Design tokens
    ───────────────────────────────────────────────────────────── */
 :root {
-  /* Brand — indigo */
   --indigo-500: #4F46E5;
   --indigo-600: #3730A3;
   --indigo-400: #6366F1;
@@ -22,7 +21,6 @@
   --indigo-bg-2:#F0F4FF;
   --indigo-bg-3:#F5F3FF;
 
-  /* Namespace accents */
   --ns-primitive:    #4F46E5;
   --ns-primitive-bg: #EEF2FF;
   --ns-generic:      #6366F1;
@@ -34,7 +32,6 @@
   --ns-immutable:    #D97706;
   --ns-immutable-bg: #FFF7ED;
 
-  /* Neutrals */
   --fg:          #111827;
   --fg-muted:    #6B7280;
   --fg-subtle:   #9CA3AF;
@@ -43,7 +40,6 @@
   --border:      #E5E7EB;
   --border-soft: #F3F4F6;
 
-  /* Code surface */
   --code-bg:   #1E1B4B;
   --code-fg:   #E0E7FF;
   --code-kw:   #818CF8;
@@ -52,12 +48,10 @@
   --code-cmt:  #6B7280;
   --code-num:  #F9A8D4;
 
-  /* Radii */
   --r-sm: 4px;
   --r-md: 8px;
   --r-lg: 12px;
 
-  /* Type */
   --sans:  "IBM Plex Sans", system-ui, sans-serif;
   --mono:  "IBM Plex Mono", ui-monospace, Menlo, monospace;
   --serif: "IBM Plex Serif", Georgia, serif;
@@ -113,7 +107,6 @@ a { color: inherit; text-decoration: none; }
   min-height: 100vh;
 }
 
-/* Sidebar */
 .sidebar {
   position: fixed;
   top: 0; left: 0; bottom: 0;
@@ -125,17 +118,14 @@ a { color: inherit; text-decoration: none; }
   z-index: 10;
 }
 .brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display: flex; align-items: center; gap: 10px;
   padding: 0 20px 20px;
 }
 .brand .mono {
   width: 26px; height: 26px;
   display: grid; place-items: center;
   font-family: var(--mono);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 13px; font-weight: 500;
   color: var(--indigo-500);
   background: var(--indigo-bg);
   border-radius: var(--r-sm);
@@ -151,8 +141,7 @@ a { color: inherit; text-decoration: none; }
 .nav-group { padding: 0 12px; margin-top: 18px; }
 .nav-label {
   font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 400;
+  font-size: 10px; font-weight: 400;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--fg-subtle);
@@ -203,7 +192,6 @@ a { color: inherit; text-decoration: none; }
   line-height: 1.5;
 }
 
-/* Main */
 .main {
   grid-column: 2;
   padding: 56px 48px 80px;
@@ -222,8 +210,7 @@ a { color: inherit; text-decoration: none; }
 }
 .badge {
   font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 400;
+  font-size: 10px; font-weight: 400;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 3px 8px;
@@ -314,7 +301,7 @@ h2.section-title {
   font-size: 14px;
   color: var(--fg-muted);
   line-height: 1.7;
-  border-left: 3px solid var(--ns-generic);
+  border-left: 3px solid var(--ns-primitive);
   padding: 2px 0 2px 14px;
   margin: 0;
 }
@@ -391,6 +378,31 @@ td.desc {
 }
 .chip:hover { color: var(--indigo-500); border-color: var(--indigo-300); }
 
+/* Inline restriction callouts */
+.callout {
+  border: 0.5px solid var(--border);
+  border-left: 3px solid var(--ns-immutable);
+  border-radius: var(--r-lg);
+  padding: 12px 14px;
+  background: var(--bg);
+}
+.callout .title {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ns-immutable);
+  margin-bottom: 4px;
+}
+.callout .body {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--fg-muted);
+  line-height: 1.7;
+}
+
 /* ─────────────────────────────────────────────────────────────
    Responsive
    ───────────────────────────────────────────────────────────── */
@@ -424,8 +436,8 @@ td.desc {
     <div class="nav-group">
       <div class="nav-label"><span class="dot primitive"></span>Array / Span / Memory</div>
       <ul class="nav-list">
-        <li class="nav-item"><a href="docs/arrays.html">Array</a></li>
-        <li class="nav-item"><a href="docs/span.html">Span&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="arrays.html">Array</a></li>
+        <li class="nav-item active"><a href="span.html">Span&lt;T&gt;</a></li>
         <li class="nav-item"><a href="memory.html">Memory&lt;T&gt;</a></li>
       </ul>
     </div>
@@ -438,7 +450,7 @@ td.desc {
         <li class="nav-item"><a href="stack.html">Stack&lt;T&gt;</a></li>
         <li class="nav-item"><a href="queue.html">Queue&lt;T&gt;</a></li>
         <li class="nav-item"><a href="priority-queue.html">PriorityQueue&lt;T,P&gt;</a></li>
-        <li class="nav-item active"><a href="index.html">Dictionary&lt;K,V&gt;</a></li>
+        <li class="nav-item"><a href="index.html">Dictionary&lt;K,V&gt;</a></li>
         <li class="nav-item"><a href="sorted-dictionary.html">SortedDictionary&lt;K,V&gt;</a></li>
         <li class="nav-item"><a href="sorted-list.html">SortedList&lt;K,V&gt;</a></li>
         <li class="nav-item"><a href="hashset.html">HashSet&lt;T&gt;</a></li>
@@ -498,14 +510,15 @@ td.desc {
       <!-- Hero -->
       <header class="hero">
         <div class="badges">
-          <span class="badge ns-generic">System.Collections.Generic</span>
-          <span class="badge">.NET 10</span>
-          <span class="badge warn">Not thread-safe</span>
-          <span class="badge">Mutable</span>
+          <span class="badge ns-primitive">System</span>
+          <span class="badge">.NET Core 2.1+</span>
+          <span class="badge">ref struct</span>
+          <span class="badge">Stack-only</span>
+          <span class="badge ok">Zero allocation</span>
         </div>
-        <h1 class="display">Dictionary&lt;TKey,&nbsp;TValue&gt;</h1>
+        <h1 class="display">Span&lt;T&gt;</h1>
         <p class="hero-lead">
-          A hash-based collection of key-value pairs. Average O(1) lookup, insert, and delete — the default choice when you need to find values by a unique key.
+          A stack-allocated, type-safe view over a contiguous region of memory — whether that memory lives on the managed heap, the stack, or in unmanaged memory. Span slices arrays and buffers without copying or allocating, making it the foundation for high-performance .NET code.
         </p>
       </header>
 
@@ -514,17 +527,17 @@ td.desc {
         <div class="metric">
           <div class="label">Lookup</div>
           <div class="value">O(1)</div>
-          <div class="note">average, hash-based</div>
+          <div class="note">direct pointer access</div>
         </div>
         <div class="metric">
-          <div class="label">Insert</div>
+          <div class="label">Slice</div>
           <div class="value">O(1)</div>
-          <div class="note">amortized, may resize</div>
+          <div class="note">no copy, no allocation</div>
         </div>
         <div class="metric">
-          <div class="label">Delete</div>
-          <div class="value">O(1)</div>
-          <div class="note">by key</div>
+          <div class="label">Allocation</div>
+          <div class="value">0 B</div>
+          <div class="note">stack-only, no GC pressure</div>
         </div>
       </div>
 
@@ -532,29 +545,41 @@ td.desc {
       <section>
         <h2 class="section-title">When to use</h2>
         <p class="when-use">
-          Reach for Dictionary when you need fast lookups by a unique key and insertion order does not matter. It is the standard map type in .NET — choose SortedDictionary only when ordered traversal is required, and ConcurrentDictionary only when multiple threads write to the same map.
+          Reach for Span&lt;T&gt; in hot paths — parsing, buffer manipulation, and numeric work — where you want to read or mutate a slice of memory without copying. Use ReadOnlySpan&lt;T&gt; for non-mutating views, especially over strings. Because Span is a ref struct, it cannot be stored on the heap, captured by async methods, or held past its owning scope — when those constraints bite, switch to Memory&lt;T&gt;.
         </p>
       </section>
 
       <!-- Code example -->
       <section>
         <h2 class="section-title">Example</h2>
-        <div class="code"><pre><span class="kw">var</span> users = <span class="kw">new</span> <span class="ty">Dictionary</span>&lt;<span class="ty">int</span>, <span class="ty">string</span>&gt;
-{
-    [<span class="num">1</span>] = <span class="str">"Alice"</span>,
-    [<span class="num">2</span>] = <span class="str">"Bob"</span>,
-    [<span class="num">3</span>] = <span class="str">"Carol"</span>
-};
+        <div class="code"><pre><span class="cmt">// Slice an array with no allocation</span>
+<span class="ty">int</span>[] source = { <span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>, <span class="num">6</span> };
+<span class="ty">Span</span>&lt;<span class="ty">int</span>&gt; window = source.AsSpan(<span class="num">1</span>, <span class="num">3</span>);    <span class="cmt">// { 2, 3, 4 }</span>
+window[<span class="num">0</span>] = <span class="num">99</span>;                              <span class="cmt">// mutates source[1]</span>
 
-<span class="cmt">// O(1) average lookup</span>
-<span class="kw">if</span> (users.TryGetValue(<span class="num">2</span>, <span class="kw">out</span> <span class="kw">var</span> name))
-    <span class="ty">Console</span>.WriteLine(name);
+<span class="cmt">// Stack allocation — no GC involvement</span>
+<span class="ty">Span</span>&lt;<span class="ty">byte</span>&gt; buffer = stackalloc <span class="ty">byte</span>[<span class="num">256</span>];
 
-<span class="cmt">// Safe add — throws on duplicate key</span>
-users.Add(<span class="num">4</span>, <span class="str">"Dan"</span>);
+<span class="cmt">// Zero-copy string parsing</span>
+<span class="ty">ReadOnlySpan</span>&lt;<span class="ty">char</span>&gt; text = <span class="str">"2026-04-21"</span>.AsSpan();
+<span class="ty">ReadOnlySpan</span>&lt;<span class="ty">char</span>&gt; year = text[..<span class="num">4</span>];
+<span class="kw">int</span> y = <span class="ty">int</span>.Parse(year);                 <span class="cmt">// no substring alloc</span>
 
-<span class="cmt">// Upsert pattern</span>
-users[<span class="num">4</span>] = <span class="str">"Daniel"</span>;</pre></div>
+<span class="cmt">// Bulk operations</span>
+<span class="ty">Span</span>&lt;<span class="ty">int</span>&gt; nums = source;
+nums.Fill(<span class="num">0</span>);
+nums.Reverse();
+<span class="kw">var</span> idx = nums.IndexOf(<span class="num">0</span>);</pre></div>
+      </section>
+
+      <!-- Restrictions callout -->
+      <section>
+        <div class="callout">
+          <div class="title">Ref struct restrictions</div>
+          <div class="body">
+            Span&lt;T&gt; lives on the stack only. It cannot be a field of a class, boxed, stored in a Task, captured by a lambda, or used across an <code style="font-family:var(--mono);font-size:12px;">await</code> or <code style="font-family:var(--mono);font-size:12px;">yield</code>. When any of these are required, use Memory&lt;T&gt; instead — it is the heap-safe counterpart.
+          </div>
+        </div>
       </section>
 
       <!-- Properties -->
@@ -567,29 +592,24 @@ users[<span class="num">4</span>] = <span class="str">"Daniel"</span>;</pre></di
             </thead>
             <tbody>
               <tr>
-                <td class="mono">Count</td>
+                <td class="mono">Length</td>
                 <td class="mono">int</td>
-                <td class="desc">Number of key-value pairs contained in the dictionary.</td>
+                <td class="desc">Number of elements in the span.</td>
               </tr>
               <tr>
-                <td class="mono">Keys</td>
-                <td class="mono">KeyCollection</td>
-                <td class="desc">A collection containing the keys.</td>
+                <td class="mono">IsEmpty</td>
+                <td class="mono">bool</td>
+                <td class="desc">True when Length is zero.</td>
               </tr>
               <tr>
-                <td class="mono">Values</td>
-                <td class="mono">ValueCollection</td>
-                <td class="desc">A collection containing the values.</td>
+                <td class="mono">this[int]</td>
+                <td class="mono">ref T</td>
+                <td class="desc">Direct reference to an element — assignment writes through to the underlying memory.</td>
               </tr>
               <tr>
-                <td class="mono">Comparer</td>
-                <td class="mono">IEqualityComparer&lt;TKey&gt;</td>
-                <td class="desc">The equality comparer used to compare keys.</td>
-              </tr>
-              <tr>
-                <td class="mono">this[TKey]</td>
-                <td class="mono">TValue</td>
-                <td class="desc">Gets or sets the value associated with the specified key.</td>
+                <td class="mono">Empty</td>
+                <td class="mono">Span&lt;T&gt;</td>
+                <td class="desc">Static — returns an empty span.</td>
               </tr>
             </tbody>
           </table>
@@ -606,29 +626,29 @@ users[<span class="num">4</span>] = <span class="str">"Daniel"</span>;</pre></di
             </thead>
             <tbody>
               <tr>
-                <td class="mono">Add</td>
-                <td class="mono">Add(TKey, TValue)</td>
-                <td class="mono">O(1) avg</td>
+                <td class="mono">Slice</td>
+                <td class="mono">Slice(int start) → Span&lt;T&gt;</td>
+                <td class="mono">O(1)</td>
               </tr>
               <tr>
-                <td class="mono">TryAdd</td>
-                <td class="mono">TryAdd(TKey, TValue) → bool</td>
-                <td class="mono">O(1) avg</td>
+                <td class="mono">Slice</td>
+                <td class="mono">Slice(int start, int length) → Span&lt;T&gt;</td>
+                <td class="mono">O(1)</td>
               </tr>
               <tr>
-                <td class="mono">Remove</td>
-                <td class="mono">Remove(TKey) → bool</td>
-                <td class="mono">O(1) avg</td>
+                <td class="mono">CopyTo</td>
+                <td class="mono">CopyTo(Span&lt;T&gt; destination)</td>
+                <td class="mono">O(n)</td>
               </tr>
               <tr>
-                <td class="mono">ContainsKey</td>
-                <td class="mono">ContainsKey(TKey) → bool</td>
-                <td class="mono">O(1) avg</td>
+                <td class="mono">TryCopyTo</td>
+                <td class="mono">TryCopyTo(Span&lt;T&gt;) → bool</td>
+                <td class="mono">O(n)</td>
               </tr>
               <tr>
-                <td class="mono">TryGetValue</td>
-                <td class="mono">TryGetValue(TKey, out TValue) → bool</td>
-                <td class="mono">O(1) avg</td>
+                <td class="mono">Fill</td>
+                <td class="mono">Fill(T value)</td>
+                <td class="mono">O(n)</td>
               </tr>
               <tr>
                 <td class="mono">Clear</td>
@@ -636,9 +656,137 @@ users[<span class="num">4</span>] = <span class="str">"Daniel"</span>;</pre></di
                 <td class="mono">O(n)</td>
               </tr>
               <tr>
-                <td class="mono">EnsureCapacity</td>
-                <td class="mono">EnsureCapacity(int) → int</td>
+                <td class="mono">Reverse</td>
+                <td class="mono">Reverse()</td>
                 <td class="mono">O(n)</td>
+              </tr>
+              <tr>
+                <td class="mono">Sort</td>
+                <td class="mono">Sort()</td>
+                <td class="mono">O(n log n)</td>
+              </tr>
+              <tr>
+                <td class="mono">IndexOf</td>
+                <td class="mono">IndexOf(T value) → int</td>
+                <td class="mono">O(n)</td>
+              </tr>
+              <tr>
+                <td class="mono">LastIndexOf</td>
+                <td class="mono">LastIndexOf(T value) → int</td>
+                <td class="mono">O(n)</td>
+              </tr>
+              <tr>
+                <td class="mono">Contains</td>
+                <td class="mono">Contains(T value) → bool</td>
+                <td class="mono">O(n)</td>
+              </tr>
+              <tr>
+                <td class="mono">BinarySearch</td>
+                <td class="mono">BinarySearch(T) → int</td>
+                <td class="mono">O(log n)</td>
+              </tr>
+              <tr>
+                <td class="mono">SequenceEqual</td>
+                <td class="mono">SequenceEqual(ReadOnlySpan&lt;T&gt;) → bool</td>
+                <td class="mono">O(n)</td>
+              </tr>
+              <tr>
+                <td class="mono">StartsWith</td>
+                <td class="mono">StartsWith(ReadOnlySpan&lt;T&gt;) → bool</td>
+                <td class="mono">O(n)</td>
+              </tr>
+              <tr>
+                <td class="mono">EndsWith</td>
+                <td class="mono">EndsWith(ReadOnlySpan&lt;T&gt;) → bool</td>
+                <td class="mono">O(n)</td>
+              </tr>
+              <tr>
+                <td class="mono">ToArray</td>
+                <td class="mono">ToArray() → T[]</td>
+                <td class="mono">O(n)</td>
+              </tr>
+              <tr>
+                <td class="mono">GetEnumerator</td>
+                <td class="mono">GetEnumerator() → Enumerator</td>
+                <td class="mono">O(1)</td>
+              </tr>
+              <tr>
+                <td class="mono">GetPinnableReference</td>
+                <td class="mono">GetPinnableReference() → ref T</td>
+                <td class="mono">O(1)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Constructing -->
+      <section>
+        <h2 class="section-title">How to construct</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Source</th><th>Syntax</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">From array</td>
+                <td class="mono">array.AsSpan()</td>
+                <td class="desc">Wraps an existing managed array with no copy.</td>
+              </tr>
+              <tr>
+                <td class="mono">From array range</td>
+                <td class="mono">array.AsSpan(start, length)</td>
+                <td class="desc">Slice view over a segment of an array.</td>
+              </tr>
+              <tr>
+                <td class="mono">Stack allocation</td>
+                <td class="mono">stackalloc T[n]</td>
+                <td class="desc">Allocates on the stack — bound to the enclosing method frame.</td>
+              </tr>
+              <tr>
+                <td class="mono">From pointer</td>
+                <td class="mono">new Span&lt;T&gt;(ptr, length)</td>
+                <td class="desc">Unsafe — wraps unmanaged memory. Use with care.</td>
+              </tr>
+              <tr>
+                <td class="mono">From Memory&lt;T&gt;</td>
+                <td class="mono">memory.Span</td>
+                <td class="desc">Materializes a Span for the duration of the current call.</td>
+              </tr>
+              <tr>
+                <td class="mono">From string</td>
+                <td class="mono">text.AsSpan()</td>
+                <td class="desc">Returns ReadOnlySpan&lt;char&gt; — strings are immutable.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Span vs ReadOnlySpan -->
+      <section>
+        <h2 class="section-title">Span&lt;T&gt; vs ReadOnlySpan&lt;T&gt;</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Aspect</th><th>Span&lt;T&gt;</th><th>ReadOnlySpan&lt;T&gt;</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">Mutability</td>
+                <td class="desc">Read and write access to underlying memory.</td>
+                <td class="desc">Read-only view — no writes permitted.</td>
+              </tr>
+              <tr>
+                <td class="mono">String support</td>
+                <td class="desc">Cannot wrap a string — strings are immutable.</td>
+                <td class="desc">Preferred view for string slicing without allocation.</td>
+              </tr>
+              <tr>
+                <td class="mono">Conversion</td>
+                <td class="desc">Implicitly converts to ReadOnlySpan&lt;T&gt;.</td>
+                <td class="desc">Cannot be converted back to a mutable Span.</td>
               </tr>
             </tbody>
           </table>
@@ -649,12 +797,10 @@ users[<span class="num">4</span>] = <span class="str">"Daniel"</span>;</pre></di
       <section>
         <h2 class="section-title">Related structures</h2>
         <div class="chips">
-          <a class="chip" href="sorted-dictionary.html">SortedDictionary&lt;K,V&gt;</a>
-          <a class="chip" href="sorted-list.html">SortedList&lt;K,V&gt;</a>
-          <a class="chip" href="hashset.html">HashSet&lt;T&gt;</a>
-          <a class="chip" href="concurrent-dictionary.html">ConcurrentDictionary</a>
-          <a class="chip" href="immutable-dictionary.html">ImmutableDictionary</a>
-          <a class="chip" href="hashtable.html">Hashtable</a>
+          <a class="chip" href="memory.html">Memory&lt;T&gt;</a>
+          <a class="chip" href="/docs/arrays.html">Array</a>
+          <a class="chip" href="list.html">List&lt;T&gt;</a>
+          <a class="chip" href="immutable-array.html">ImmutableArray&lt;T&gt;</a>
         </div>
       </section>
 
