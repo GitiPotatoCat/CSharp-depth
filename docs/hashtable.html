@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hashtable — cs.blueprint</title>
+<meta name="description" content="System.Collections.Hashtable — non-generic hash-based key-value collection. Legacy reference for .NET 10 / C# 14." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&family=IBM+Plex+Serif:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --indigo-500: #4F46E5;  --indigo-600: #3730A3;
+  --indigo-400: #6366F1;  --indigo-300: #818CF8;
+  --indigo-bg:  #EEF2FF;  --indigo-bg-2:#F0F4FF; --indigo-bg-3:#F5F3FF;
+
+  --ns-primitive:    #4F46E5;  --ns-primitive-bg: #EEF2FF;
+  --ns-generic:      #6366F1;  --ns-generic-bg:   #F0F4FF;
+  --ns-legacy:       #818CF8;  --ns-legacy-bg:    #F5F3FF;
+  --ns-concurrent:   #059669;  --ns-concurrent-bg:#F0FDF4;
+  --ns-immutable:    #D97706;  --ns-immutable-bg: #FFF7ED;
+
+  --fg: #111827;  --fg-muted: #6B7280;  --fg-subtle: #9CA3AF;
+  --bg: #FFFFFF;  --bg-soft: #FAFAFA;
+  --border: #E5E7EB; --border-soft: #F3F4F6;
+  --scrim: rgba(17, 24, 39, 0.40);
+
+  --code-bg: #1E1B4B; --code-fg: #E0E7FF;
+  --code-kw: #818CF8; --code-str: #FCD34D; --code-type: #A5B4FC;
+  --code-cmt: #6B7280; --code-num: #F9A8D4;
+
+  --r-sm: 4px; --r-md: 8px; --r-lg: 12px;
+  --sans: "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --serif: "IBM Plex Serif", Georgia, serif;
+
+  --sb-w: 220px; --topbar-h: 52px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fg: #E5E7EB; --fg-muted: #9CA3AF; --fg-subtle: #6B7280;
+    --bg: #0B0B10; --bg-soft: #111119;
+    --border: #1F2028; --border-soft: #171822;
+    --scrim: rgba(0, 0, 0, 0.60);
+    --indigo-bg: #1E1B4B; --indigo-bg-2: #1B1A3A; --indigo-bg-3: #201A3E;
+    --ns-primitive-bg: #1E1B4B; --ns-generic-bg: #1B1A3A; --ns-legacy-bg: #201A3E;
+    --ns-concurrent-bg: #0F2A20; --ns-immutable-bg: #2A1E0F;
+    --code-bg: #0F0E26;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--sans); font-weight: 400; font-size: 14px; line-height: 1.7;
+  color: var(--fg); background: var(--bg);
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+}
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; border: 0; background: none; padding: 0; cursor: pointer; color: inherit; }
+
+.topbar {
+  display: none; position: sticky; top: 0; z-index: 30;
+  height: var(--topbar-h); padding: 0 16px;
+  background: var(--bg); border-bottom: 0.5px solid var(--border);
+  align-items: center; gap: 12px;
+}
+.topbar .brand-mini { display: flex; align-items: center; gap: 10px; }
+.topbar .brand-mini .mono {
+  width: 26px; height: 26px; display: grid; place-items: center;
+  font-family: var(--mono); font-size: 13px; font-weight: 500;
+  color: var(--indigo-500); background: var(--indigo-bg);
+  border-radius: var(--r-sm); letter-spacing: -0.02em;
+}
+.topbar .brand-mini .name {
+  font-family: var(--sans); font-weight: 300; font-size: 18px; letter-spacing: -0.02em;
+}
+.menu-btn {
+  width: 36px; height: 36px; display: grid; place-items: center;
+  border-radius: var(--r-sm); color: var(--fg-muted);
+  transition: background 120ms, color 120ms;
+}
+.menu-btn:hover { background: var(--bg-soft); color: var(--fg); }
+.menu-btn svg { width: 18px; height: 18px; display: block; }
+
+.scrim {
+  display: none; position: fixed; inset: 0;
+  background: var(--scrim); z-index: 20;
+  opacity: 0; transition: opacity 180ms ease;
+}
+.scrim.show { opacity: 1; }
+
+.app { display: grid; grid-template-columns: var(--sb-w) 1fr; min-height: 100vh; }
+
+.sidebar {
+  position: fixed; top: 0; left: 0; bottom: 0;
+  width: var(--sb-w);
+  border-right: 0.5px solid var(--border);
+  background: var(--bg); overflow-y: auto;
+  padding: 20px 0 72px; z-index: 25;
+  transition: transform 220ms cubic-bezier(.22, .61, .36, 1);
+}
+.brand {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 20px 20px;
+}
+.brand .mono {
+  width: 28px; height: 28px; display: grid; place-items: center;
+  font-family: var(--mono); font-size: 13px; font-weight: 500;
+  color: var(--indigo-500); background: var(--indigo-bg);
+  border-radius: var(--r-sm); letter-spacing: -0.02em;
+}
+.brand .name { font-family: var(--sans); font-weight: 300; font-size: 20px; letter-spacing: -0.02em; }
+.sidebar .close-btn {
+  display: none; position: absolute; top: 18px; right: 14px;
+  width: 30px; height: 30px; place-items: center;
+  border-radius: var(--r-sm); color: var(--fg-muted);
+}
+.sidebar .close-btn:hover { background: var(--bg-soft); color: var(--fg); }
+.sidebar .close-btn svg { width: 16px; height: 16px; }
+
+.nav-group { padding: 0 12px; margin-top: 18px; }
+.nav-label {
+  font-family: var(--mono); font-size: 10px; font-weight: 400;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--fg-subtle); padding: 0 8px 6px;
+  display: flex; align-items: center; gap: 6px;
+}
+.dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; flex: none; }
+.dot.primitive { background: var(--ns-primitive); }
+.dot.generic { background: var(--ns-generic); }
+.dot.legacy { background: var(--ns-legacy); }
+.dot.concurrent { background: var(--ns-concurrent); }
+.dot.immutable { background: var(--ns-immutable); }
+
+.nav-list { list-style: none; margin: 0; padding: 0; }
+.nav-item a {
+  display: block; padding: 5px 8px;
+  font-family: var(--mono); font-size: 12px;
+  color: var(--fg-muted);
+  border-radius: var(--r-sm);
+  transition: background 120ms, color 120ms;
+}
+.nav-item a:hover { color: var(--fg); background: var(--bg-soft); }
+.nav-item.active a {
+  color: var(--indigo-500); background: var(--indigo-bg); font-weight: 500;
+}
+@media (prefers-color-scheme: dark) { .nav-item.active a { color: var(--indigo-300); } }
+
+.side-footer {
+  position: absolute; bottom: 16px; left: 20px; right: 20px;
+  font-family: var(--serif); font-style: italic; font-weight: 300;
+  font-size: 11px; color: var(--fg-subtle); line-height: 1.5;
+}
+
+.main {
+  grid-column: 2; padding: 56px 48px 80px;
+  display: flex; justify-content: center;
+}
+.content { width: 100%; max-width: 760px; }
+
+.hero { margin-bottom: 28px; }
+.badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.badge {
+  font-family: var(--mono); font-size: 10px; font-weight: 400;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 999px;
+  border: 0.5px solid var(--border);
+  color: var(--fg-muted); background: var(--bg-soft);
+}
+.badge.ns-generic    { color: var(--ns-generic);    background: var(--ns-generic-bg);    border-color: transparent; }
+.badge.ns-primitive  { color: var(--ns-primitive);  background: var(--ns-primitive-bg);  border-color: transparent; }
+.badge.ns-legacy     { color: var(--ns-legacy);     background: var(--ns-legacy-bg);     border-color: transparent; }
+.badge.ns-concurrent { color: var(--ns-concurrent); background: var(--ns-concurrent-bg); border-color: transparent; }
+.badge.ns-immutable  { color: var(--ns-immutable);  background: var(--ns-immutable-bg);  border-color: transparent; }
+.badge.ok            { color: var(--ns-concurrent); background: var(--ns-concurrent-bg); border-color: transparent; }
+.badge.warn          { color: var(--ns-immutable);  background: var(--ns-immutable-bg);  border-color: transparent; }
+
+.display {
+  font-family: var(--mono); font-weight: 400;
+  font-size: 28px; letter-spacing: -0.02em;
+  color: var(--fg); margin: 0 0 8px; line-height: 1.25;
+}
+.hero-lead {
+  font-family: var(--sans); font-size: 14px;
+  color: var(--fg-muted); margin: 0; max-width: 62ch;
+}
+
+.metrics {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 10px; margin: 24px 0 28px;
+}
+.metric {
+  border: 0.5px solid var(--border); border-radius: var(--r-lg);
+  padding: 14px 16px; background: var(--bg);
+}
+.metric .label {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--fg-subtle);
+}
+.metric .value {
+  font-family: var(--mono); font-size: 18px;
+  color: var(--fg); margin-top: 4px;
+}
+.metric .note {
+  font-family: var(--serif); font-style: italic; font-weight: 300;
+  font-size: 12px; color: var(--fg-muted); margin-top: 2px;
+}
+
+section { margin-bottom: 32px; }
+h2.section-title {
+  font-family: var(--sans); font-weight: 500;
+  font-size: 15px; color: var(--fg);
+  margin: 0 0 10px; letter-spacing: -0.01em;
+}
+
+.when-use {
+  font-family: var(--serif); font-style: italic; font-weight: 300;
+  font-size: 14px; color: var(--fg-muted); line-height: 1.7;
+  border-left: 3px solid var(--ns-legacy);
+  padding: 2px 0 2px 14px; margin: 0;
+}
+
+.code {
+  background: var(--code-bg); color: var(--code-fg);
+  border-radius: var(--r-lg);
+  padding: 16px 18px; overflow-x: auto;
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.7;
+}
+.code .kw { color: var(--code-kw); }
+.code .ty { color: var(--code-type); }
+.code .str { color: var(--code-str); }
+.code .num { color: var(--code-num); }
+.code .cmt { color: var(--code-cmt); font-style: italic; }
+pre { margin: 0; }
+
+.table-wrap {
+  border: 0.5px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden; overflow-x: auto;
+}
+table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 480px; }
+thead th {
+  text-align: left;
+  font-family: var(--mono); font-size: 10px; font-weight: 400;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--fg-subtle); padding: 10px 14px;
+  background: var(--bg-soft);
+  border-bottom: 0.5px solid var(--border);
+  white-space: nowrap;
+}
+tbody td { padding: 10px 14px; border-bottom: 0.5px solid var(--border-soft); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+td.mono, th.mono { font-family: var(--mono); font-size: 12px; color: var(--fg); white-space: nowrap; }
+td.desc { font-family: var(--sans); color: var(--fg-muted); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  font-family: var(--mono); font-size: 12px;
+  padding: 5px 10px; border-radius: 999px;
+  border: 0.5px solid var(--border);
+  color: var(--fg-muted); background: var(--bg);
+  transition: color 120ms, border-color 120ms; cursor: pointer;
+}
+.chip:hover { color: var(--indigo-500); border-color: var(--indigo-300); }
+
+.callout {
+  border: 0.5px solid var(--border);
+  border-left: 3px solid var(--ns-immutable);
+  border-radius: var(--r-lg);
+  padding: 12px 14px; background: var(--bg);
+}
+.callout .title {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ns-immutable); margin-bottom: 4px;
+}
+.callout .body {
+  font-family: var(--serif); font-weight: 300; font-style: italic;
+  font-size: 13px; color: var(--fg-muted); line-height: 1.7;
+}
+
+@media (max-width: 1100px) { .main { padding: 48px 36px 80px; } }
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  .main { grid-column: 1; padding: 24px 22px 60px; }
+  .topbar { display: flex; }
+  .sidebar { transform: translateX(-100%); width: min(84vw, 280px); }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar .close-btn { display: grid; }
+  .scrim.show { display: block; }
+  .side-footer { position: static; margin-top: 20px; padding: 0 20px; }
+}
+@media (max-width: 560px) {
+  .metrics { grid-template-columns: 1fr; }
+  .display { font-size: 24px; }
+  .main { padding: 20px 16px 48px; }
+  .code { padding: 14px; font-size: 12px; }
+}
+</style>
+</head>
+<body>
+
+<header class="topbar" role="banner">
+  <button class="menu-btn" id="menuOpen" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+      <path d="M4 7h16M4 12h16M4 17h16"/>
+    </svg>
+  </button>
+  <a class="brand-mini" href="../index.html">
+    <div class="mono">C#</div>
+    <div class="name">cs.blueprint</div>
+  </a>
+</header>
+
+<div class="scrim" id="scrim" aria-hidden="true"></div>
+
+<div class="app">
+
+  <aside class="sidebar" id="sidebar" aria-label="Primary">
+    <button class="close-btn" id="menuClose" aria-label="Close navigation">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M6 6l12 12M18 6L6 18"/>
+      </svg>
+    </button>
+
+    <a class="brand" href="../index.html">
+      <div class="mono">C#</div>
+      <div class="name">cs.blueprint</div>
+    </a>
+
+    <div class="nav-group">
+      <div class="nav-label"><span class="dot primitive"></span>Array / Span / Memory</div>
+      <ul class="nav-list">
+        <li class="nav-item"><a href="arrays.html">Array</a></li>
+        <li class="nav-item"><a href="span.html">Span&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="memory.html">Memory&lt;T&gt;</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label"><span class="dot generic"></span>System.Collections.Generic</div>
+      <ul class="nav-list">
+        <li class="nav-item"><a href="list.html">List&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="linkedlist.html">LinkedList&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="stack.html">Stack&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="queue.html">Queue&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="priority-queue.html">PriorityQueue&lt;T,P&gt;</a></li>
+        <li class="nav-item"><a href="../index.html">Dictionary&lt;K,V&gt;</a></li>
+        <li class="nav-item"><a href="sorted-dictionary.html">SortedDictionary&lt;K,V&gt;</a></li>
+        <li class="nav-item"><a href="sorted-list.html">SortedList&lt;K,V&gt;</a></li>
+        <li class="nav-item"><a href="hashset.html">HashSet&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="sorted-set.html">SortedSet&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="observable-collection.html">ObservableCollection&lt;T&gt;</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label"><span class="dot legacy"></span>System.Collections (legacy)</div>
+      <ul class="nav-list">
+        <li class="nav-item"><a href="arraylist.html">ArrayList</a></li>
+        <li class="nav-item active"><a href="hashtable.html">Hashtable</a></li>
+        <li class="nav-item"><a href="legacy-stack.html">Stack</a></li>
+        <li class="nav-item"><a href="legacy-queue.html">Queue</a></li>
+        <li class="nav-item"><a href="legacy-sorted-list.html">SortedList</a></li>
+        <li class="nav-item"><a href="bitarray.html">BitArray</a></li>
+        <li class="nav-item"><a href="string-collection.html">StringCollection</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label"><span class="dot concurrent"></span>System.Collections.Concurrent</div>
+      <ul class="nav-list">
+        <li class="nav-item"><a href="concurrent-dictionary.html">ConcurrentDictionary</a></li>
+        <li class="nav-item"><a href="concurrent-queue.html">ConcurrentQueue&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="concurrent-stack.html">ConcurrentStack&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="concurrent-bag.html">ConcurrentBag&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="blocking-collection.html">BlockingCollection&lt;T&gt;</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label"><span class="dot immutable"></span>System.Collections.Immutable</div>
+      <ul class="nav-list">
+        <li class="nav-item"><a href="immutable-array.html">ImmutableArray&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="immutable-list.html">ImmutableList&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="immutable-dictionary.html">ImmutableDictionary</a></li>
+        <li class="nav-item"><a href="immutable-sorted-dictionary.html">ImmutableSortedDictionary</a></li>
+        <li class="nav-item"><a href="immutable-hashset.html">ImmutableHashSet&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="immutable-sorted-set.html">ImmutableSortedSet&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="immutable-queue.html">ImmutableQueue&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="immutable-stack.html">ImmutableStack&lt;T&gt;</a></li>
+      </ul>
+    </div>
+
+    <div class="side-footer">
+      Based on MS Learn<br/>
+      .NET 10 · C# 14
+    </div>
+  </aside>
+
+  <main class="main">
+    <article class="content">
+
+      <header class="hero">
+        <div class="badges">
+          <span class="badge ns-legacy">System.Collections</span>
+          <span class="badge">Since .NET Framework 1.1</span>
+          <span class="badge warn">Legacy — prefer Dictionary&lt;K,V&gt;</span>
+          <span class="badge">Thread-safe reads</span>
+          <span class="badge">Untyped</span>
+        </div>
+        <h1 class="display">Hashtable</h1>
+        <p class="hero-lead">
+          A non-generic hash-based map from <code style="font-family:var(--mono);font-size:13px;">object</code> keys to <code style="font-family:var(--mono);font-size:13px;">object</code> values — the pre-generics ancestor of Dictionary&lt;K,V&gt;. Distinct from Dictionary: reads are lock-free and safe for concurrent readers, missing keys return <code style="font-family:var(--mono);font-size:13px;">null</code> instead of throwing, and both keys and values are boxed when they are value types.
+        </p>
+      </header>
+
+      <div class="metrics" aria-label="Complexity">
+        <div class="metric">
+          <div class="label">Lookup</div>
+          <div class="value">O(1)</div>
+          <div class="note">average, hash-based</div>
+        </div>
+        <div class="metric">
+          <div class="label">Insert</div>
+          <div class="value">O(1)</div>
+          <div class="note">amortized, may rehash</div>
+        </div>
+        <div class="metric">
+          <div class="label">Delete</div>
+          <div class="value">O(1)</div>
+          <div class="note">by key</div>
+        </div>
+      </div>
+
+      <section>
+        <div class="callout">
+          <div class="title">Use Dictionary&lt;K,V&gt; instead</div>
+          <div class="body">
+            Hashtable predates generics. Every key and value lives as <code style="font-family:var(--mono);font-size:12px;">object</code> — value types are boxed at insert, unboxed at read, and the compiler cannot stop you from storing a mismatched type. Dictionary&lt;K,V&gt; is strongly typed, faster, and has a richer API. Hashtable remains only for COM interop, legacy serialization, and the occasional reader-safe map where switching to ConcurrentDictionary is overkill.
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="section-title">When to use</h2>
+        <p class="when-use">
+          Only when a legacy API forces your hand — a COM interop surface, a serialized <code style="font-family:var(--mono);font-size:13px;">.config</code> payload, or a very old library. New code should reach for Dictionary&lt;TKey,TValue&gt; for single-threaded access and ConcurrentDictionary&lt;TKey,TValue&gt; when multiple threads write. The one small niche Hashtable still fills is reader-heavy caches where writes are rare: reads need no locks by design.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="section-title">Example</h2>
+        <div class="code"><pre><span class="cmt">// Construct and populate — any key, any value</span>
+<span class="kw">var</span> config = <span class="kw">new</span> <span class="ty">Hashtable</span>();
+config[<span class="str">"host"</span>]    = <span class="str">"localhost"</span>;
+config[<span class="str">"port"</span>]    = <span class="num">8080</span>;           <span class="cmt">// int — boxed</span>
+config[<span class="str">"enabled"</span>] = <span class="kw">true</span>;           <span class="cmt">// bool — boxed</span>
+
+<span class="cmt">// Missing key returns null — no exception</span>
+<span class="kw">var</span> missing = config[<span class="str">"unknown"</span>];    <span class="cmt">// null</span>
+
+<span class="cmt">// Indexer returns object — cast required</span>
+<span class="ty">string</span>? host    = (<span class="ty">string</span>?)config[<span class="str">"host"</span>];
+<span class="kw">int</span>     port    = (<span class="kw">int</span>)config[<span class="str">"port"</span>];     <span class="cmt">// unbox</span>
+<span class="ty">bool</span>    enabled = (<span class="ty">bool</span>)config[<span class="str">"enabled"</span>];
+
+<span class="cmt">// Safe membership check</span>
+<span class="kw">if</span> (config.ContainsKey(<span class="str">"host"</span>))
+    <span class="ty">Console</span>.WriteLine(<span class="str">"ok"</span>);
+
+<span class="cmt">// Remove is safe even when the key is absent</span>
+config.Remove(<span class="str">"port"</span>);
+config.Remove(<span class="str">"never-there"</span>);          <span class="cmt">// no throw</span>
+
+<span class="cmt">// Enumerate yields DictionaryEntry, not KeyValuePair</span>
+<span class="kw">foreach</span> (<span class="ty">DictionaryEntry</span> e <span class="kw">in</span> config)
+    <span class="ty">Console</span>.WriteLine($<span class="str">"{e.Key} = {e.Value}"</span>);
+
+<span class="cmt">// Case-insensitive keys via custom providers</span>
+<span class="kw">var</span> ci = <span class="kw">new</span> <span class="ty">Hashtable</span>(
+    <span class="ty">StringComparer</span>.OrdinalIgnoreCase);
+
+<span class="cmt">// Synchronized wrapper — coarse locking for writers</span>
+<span class="ty">Hashtable</span> safe = <span class="ty">Hashtable</span>.Synchronized(config);
+
+<span class="cmt">// Bridge to the modern world</span>
+<span class="kw">var</span> typed = config
+    .Cast&lt;<span class="ty">DictionaryEntry</span>&gt;()
+    .ToDictionary(e =&gt; (<span class="ty">string</span>)e.Key!, e =&gt; e.Value);</pre></div>
+      </section>
+
+      <section>
+        <h2 class="section-title">Properties</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Property</th><th>Type</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="mono">Count</td><td class="mono">int</td><td class="desc">Number of key-value pairs.</td></tr>
+              <tr><td class="mono">Keys</td><td class="mono">ICollection</td><td class="desc">Collection of keys. Enumeration order is arbitrary.</td></tr>
+              <tr><td class="mono">Values</td><td class="mono">ICollection</td><td class="desc">Collection of values in the same order as Keys.</td></tr>
+              <tr><td class="mono">this[object]</td><td class="mono">object?</td><td class="desc">Gets or sets the value associated with a key. Reading an absent key returns null.</td></tr>
+              <tr><td class="mono">IsFixedSize</td><td class="mono">bool</td><td class="desc">False for normal instances.</td></tr>
+              <tr><td class="mono">IsReadOnly</td><td class="mono">bool</td><td class="desc">False unless wrapped via a read-only adapter.</td></tr>
+              <tr><td class="mono">IsSynchronized</td><td class="mono">bool</td><td class="desc">True when this instance is a <code style="font-family:var(--mono);font-size:12px;">Synchronized</code> wrapper.</td></tr>
+              <tr><td class="mono">SyncRoot</td><td class="mono">object</td><td class="desc">Object to lock on when manually synchronizing writes.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="section-title">Methods</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Method</th><th>Signature</th><th>Complexity</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="mono">Add</td><td class="mono">Add(object key, object? value)</td><td class="mono">O(1) amortized</td></tr>
+              <tr><td class="mono">Remove</td><td class="mono">Remove(object key)</td><td class="mono">O(1) avg</td></tr>
+              <tr><td class="mono">Clear</td><td class="mono">Clear()</td><td class="mono">O(n)</td></tr>
+              <tr><td class="mono">ContainsKey</td><td class="mono">ContainsKey(object) → bool</td><td class="mono">O(1) avg</td></tr>
+              <tr><td class="mono">Contains</td><td class="mono">Contains(object) → bool</td><td class="mono">O(1) avg</td></tr>
+              <tr><td class="mono">ContainsValue</td><td class="mono">ContainsValue(object?) → bool</td><td class="mono">O(n)</td></tr>
+              <tr><td class="mono">CopyTo</td><td class="mono">CopyTo(Array, int)</td><td class="mono">O(n)</td></tr>
+              <tr><td class="mono">Clone</td><td class="mono">Clone() → object</td><td class="mono">O(n)</td></tr>
+              <tr><td class="mono">GetEnumerator</td><td class="mono">GetEnumerator() → IDictionaryEnumerator</td><td class="mono">O(1)</td></tr>
+              <tr><td class="mono">Synchronized</td><td class="mono">Hashtable.Synchronized(Hashtable) → Hashtable</td><td class="mono">O(1)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="section-title">Hashtable quirks</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Quirk</th><th>Behavior</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="mono">Missing key</td><td class="desc">Returns <code style="font-family:var(--mono);font-size:12px;">null</code> silently — Dictionary&lt;K,V&gt; throws <code style="font-family:var(--mono);font-size:12px;">KeyNotFoundException</code>.</td></tr>
+              <tr><td class="mono">Enumeration type</td><td class="desc">Yields <code style="font-family:var(--mono);font-size:12px;">DictionaryEntry</code> — not <code style="font-family:var(--mono);font-size:12px;">KeyValuePair&lt;K,V&gt;</code>.</td></tr>
+              <tr><td class="mono">Reader safety</td><td class="desc">One writer and many readers is safe without locks — a property Dictionary does not offer.</td></tr>
+              <tr><td class="mono">Null keys</td><td class="desc">Disallowed — adding a null key throws <code style="font-family:var(--mono);font-size:12px;">ArgumentNullException</code>.</td></tr>
+              <tr><td class="mono">Null values</td><td class="desc">Allowed — both reads of missing keys and explicit null values return null, so the two cases are indistinguishable.</td></tr>
+              <tr><td class="mono">Custom hashing</td><td class="desc">Constructor takes <code style="font-family:var(--mono);font-size:12px;">IEqualityComparer</code> for case-insensitive or custom equality.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="section-title">Hashtable vs Dictionary vs ConcurrentDictionary</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Aspect</th><th>Hashtable</th><th>Dictionary&lt;K,V&gt;</th><th>ConcurrentDictionary</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="mono">Types</td><td class="desc">object → object</td><td class="desc">Strongly typed</td><td class="desc">Strongly typed</td></tr>
+              <tr><td class="mono">Boxing</td><td class="desc">Both keys and values boxed.</td><td class="desc">None for generic args.</td><td class="desc">None for generic args.</td></tr>
+              <tr><td class="mono">Missing key</td><td class="desc">Returns null.</td><td class="desc">Throws KeyNotFoundException.</td><td class="desc">Use TryGetValue.</td></tr>
+              <tr><td class="mono">Reader safety</td><td class="desc">Lock-free for readers.</td><td class="desc">Undefined under writes.</td><td class="desc">Fully thread-safe.</td></tr>
+              <tr><td class="mono">Writer safety</td><td class="desc">Synchronized wrapper — coarse lock.</td><td class="desc">External lock required.</td><td class="desc">Built-in, fine-grained.</td></tr>
+              <tr><td class="mono">When to pick</td><td class="desc">Legacy interop only.</td><td class="desc">Single-threaded — the default.</td><td class="desc">Multi-writer scenarios.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="section-title">Migration cheatsheet</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Hashtable</th><th>Dictionary&lt;K,V&gt;</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="mono">new Hashtable()</td><td class="mono">new Dictionary&lt;K,V&gt;()</td></tr>
+              <tr><td class="mono">ht[key] = value</td><td class="mono">dict[key] = value</td></tr>
+              <tr><td class="mono">(T)ht[key]</td><td class="mono">dict[key]</td></tr>
+              <tr><td class="mono">ht[key] ?? defaultVal</td><td class="mono">dict.TryGetValue(key, out var v) ? v : defaultVal</td></tr>
+              <tr><td class="mono">foreach (DictionaryEntry e in ht)</td><td class="mono">foreach (var kv in dict)</td></tr>
+              <tr><td class="mono">Hashtable.Synchronized(ht)</td><td class="desc">Use <code style="font-family:var(--mono);font-size:12px;">ConcurrentDictionary&lt;K,V&gt;</code> — a better primitive for writer safety.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="section-title">Related structures</h2>
+        <div class="chips">
+          <a class="chip" href="../index.html">Dictionary&lt;K,V&gt;</a>
+          <a class="chip" href="concurrent-dictionary.html">ConcurrentDictionary</a>
+          <a class="chip" href="sorted-dictionary.html">SortedDictionary&lt;K,V&gt;</a>
+          <a class="chip" href="legacy-sorted-list.html">SortedList (legacy)</a>
+          <a class="chip" href="arraylist.html">ArrayList</a>
+        </div>
+      </section>
+
+    </article>
+  </main>
+</div>
+
+<script>
+(function () {
+  const sb = document.getElementById('sidebar');
+  const scrim = document.getElementById('scrim');
+  const openB = document.getElementById('menuOpen');
+  const closeB = document.getElementById('menuClose');
+  function open()  { sb.classList.add('open'); scrim.classList.add('show'); openB.setAttribute('aria-expanded','true'); document.body.style.overflow='hidden'; }
+  function close() { sb.classList.remove('open'); scrim.classList.remove('show'); openB.setAttribute('aria-expanded','false'); document.body.style.overflow=''; }
+  openB.addEventListener('click', open);
+  closeB.addEventListener('click', close);
+  scrim.addEventListener('click', close);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+  sb.querySelectorAll('.nav-item a').forEach(a => a.addEventListener('click', () => {
+    if (window.matchMedia('(max-width: 900px)').matches) close();
+  }));
+})();
+</script>
+
+</body>
+</html>
