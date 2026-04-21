@@ -1,0 +1,2470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Queue&lt;T&gt; &mdash; C# Data Structures</title>
+<meta name="description" content="Interactive technical reference for Queue<T> in C# 14 / .NET 10 with animated conveyor-belt enqueue/dequeue and a BFS graph traversal demo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:         #0F172A;
+    --surface:    #111827;
+    --surface-2:  #0b1220;
+    --surface-3:  #161f33;
+    --border:     #1F2933;
+    --border-2:   #2a3441;
+
+    --text:       #E5E7EB;
+    --text-2:     #9CA3AF;
+    --text-3:     #6b7280;
+
+    --blue:       #2563EB;
+    --blue-soft:  rgba(37, 99, 235, 0.12);
+    --cyan:       #22D3EE;
+    --cyan-soft:  rgba(34, 211, 238, 0.12);
+    --amber:      #F59E0B;
+    --amber-soft: rgba(245, 158, 11, 0.12);
+    --emerald:    #10B981;
+    --emerald-soft: rgba(16, 185, 129, 0.12);
+    --red:        #EF4444;
+    --red-soft:   rgba(239, 68, 68, 0.12);
+
+    --sans: "IBM Plex Sans", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, monospace;
+    --head: "Inter", system-ui, sans-serif;
+
+    --radius:     12px;
+    --radius-sm:  6px;
+    --max-w:      1280px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-weight: 400;
+    font-size: 15px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(37, 99, 235, 0.06) 0%, transparent 40%),
+      radial-gradient(circle at 85% 40%, rgba(34, 211, 238, 0.04) 0%, transparent 40%),
+      radial-gradient(circle, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 24px 24px;
+  }
+
+  ::selection { background: var(--blue); color: white; }
+
+  .wrap {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  /* ─── Top nav (shared pattern) ───────────────────── */
+  .topnav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .topnav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    padding: 0 32px;
+    max-width: var(--max-w);
+    margin: 0 auto;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--head);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    text-decoration: none;
+  }
+  .brand-mark {
+    width: 28px; height: 28px;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--blue), var(--cyan));
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 13px;
+    color: white;
+  }
+  .brand-sep { width: 1px; height: 16px; background: var(--border-2); margin: 0 4px; }
+  .brand-tag {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-2);
+  }
+  .back-link {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--text-2);
+    text-decoration: none;
+    padding: 7px 12px;
+    border-radius: var(--radius-sm);
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .back-link:hover { color: var(--text); background: var(--border); }
+
+  /* ─── Breadcrumb ─────────────────────────────────── */
+  .crumb {
+    padding: 24px 0 0;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-3);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .crumb a { color: var(--text-2); text-decoration: none; }
+  .crumb a:hover { color: var(--cyan); }
+  .crumb .sep { margin: 0 8px; color: var(--border-2); }
+
+  /* ─── Article header ─────────────────────────────── */
+  .article-header {
+    padding: 24px 0 48px;
+    border-bottom: 1px solid var(--border);
+  }
+  .module-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border: 1px solid var(--blue);
+    background: var(--blue-soft);
+    color: var(--cyan);
+    border-radius: 100px;
+    margin-bottom: 20px;
+  }
+  .module-tag .mdot {
+    width: 6px; height: 6px;
+    background: var(--cyan);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--cyan);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
+  }
+
+  .article-header h1 {
+    font-family: var(--head);
+    font-weight: 800;
+    font-size: clamp(40px, 6vw, 72px);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+  .article-header h1 .generic { color: var(--text-3); font-weight: 600; }
+
+  .article-sub {
+    font-family: var(--sans);
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--text-2);
+    max-width: 720px;
+    margin-bottom: 32px;
+  }
+  .article-sub code {
+    font-family: var(--mono);
+    font-size: 0.9em;
+    color: var(--cyan);
+    background: var(--cyan-soft);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--surface);
+    max-width: 800px;
+  }
+  .meta-cell {
+    flex: 1 1 140px;
+    padding: 14px 18px;
+    border-right: 1px solid var(--border);
+  }
+  .meta-cell:last-child { border-right: none; }
+  .meta-cell .label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-3);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .meta-cell .value {
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* ─── Layout: content + sticky TOC ───────────────── */
+  .layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 64px;
+    padding: 48px 0;
+  }
+  aside.toc {
+    position: sticky;
+    top: 80px;
+    align-self: start;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    padding-right: 10px;
+  }
+  aside.toc .toc-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-3);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  aside.toc ol { list-style: none; counter-reset: toc; }
+  aside.toc ol li { counter-increment: toc; border-left: 1px solid var(--border); }
+  aside.toc ol li a {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 8px 0 8px 14px;
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--text-2);
+    text-decoration: none;
+    margin-left: -1px;
+    border-left: 1px solid transparent;
+    transition: all 0.15s;
+  }
+  aside.toc ol li a::before {
+    content: counter(toc, decimal-leading-zero);
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-3);
+    letter-spacing: 0.1em;
+  }
+  aside.toc ol li a:hover { color: var(--text); }
+  aside.toc ol li a.active {
+    color: var(--cyan);
+    border-left-color: var(--cyan);
+  }
+  aside.toc ol li a.active::before { color: var(--cyan); }
+
+  .content { max-width: 820px; min-width: 0; }
+
+  /* ─── Sections & typography ──────────────────────── */
+  section {
+    padding: 48px 0;
+    scroll-margin-top: 80px;
+  }
+  section + section { border-top: 1px solid var(--border); }
+
+  section h2 {
+    font-family: var(--head);
+    font-weight: 700;
+    font-size: 32px;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+  }
+  section h2 .sec-num {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--cyan);
+    font-weight: 400;
+    letter-spacing: 0.15em;
+  }
+  section h3 {
+    font-family: var(--head);
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    margin: 28px 0 12px;
+  }
+
+  .content p {
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text-2);
+    margin-bottom: 18px;
+  }
+  .content p strong { color: var(--text); font-weight: 600; }
+
+  code.inline {
+    font-family: var(--mono);
+    font-size: 0.9em;
+    color: var(--cyan);
+    background: var(--cyan-soft);
+    padding: 2px 7px;
+    border-radius: 4px;
+    border: 1px solid rgba(34, 211, 238, 0.15);
+  }
+  code.inline.api {
+    color: var(--blue);
+    background: var(--blue-soft);
+    border-color: rgba(37, 99, 235, 0.2);
+  }
+
+  /* ─── Code blocks ────────────────────────────────── */
+  .code-block {
+    margin: 20px 0;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+  .code-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .code-head .filename {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .code-head .filename::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--emerald);
+    border-radius: 50%;
+  }
+  .copy-btn {
+    font-family: var(--mono);
+    font-size: 10px;
+    background: transparent;
+    border: 1px solid var(--border-2);
+    color: var(--text-3);
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .copy-btn:hover { color: var(--text); border-color: var(--text-2); }
+  .copy-btn.copied { color: var(--emerald); border-color: var(--emerald); }
+
+  .code-block pre {
+    padding: 18px 20px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--text);
+  }
+
+  .tok-key  { color: #c792ea; }
+  .tok-type { color: #22D3EE; }
+  .tok-str  { color: #A5E6A5; }
+  .tok-num  { color: #F59E0B; }
+  .tok-com  { color: #6b7280; font-style: italic; }
+  .tok-fn   { color: #82AAFF; }
+
+  /* ─── Tabs ───────────────────────────────────────── */
+  .tabs {
+    margin: 24px 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .tab-bar {
+    display: flex;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+  }
+  .tab-btn {
+    flex-shrink: 0;
+    padding: 12px 18px;
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    color: var(--text-3);
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tab-btn:hover { color: var(--text-2); background: var(--surface-3); }
+  .tab-btn.active {
+    background: var(--surface);
+    color: var(--cyan);
+    border-bottom: 2px solid var(--cyan);
+    margin-bottom: -1px;
+  }
+  .tab-btn .bigo {
+    font-size: 9px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background: var(--border);
+    color: var(--text-2);
+  }
+  .tab-btn.active .bigo { background: var(--cyan-soft); color: var(--cyan); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .tab-panel .code-block { margin: 0; border: none; border-radius: 0; }
+  .tab-panel .panel-intro {
+    padding: 16px 20px 0;
+    font-size: 14px;
+    color: var(--text-2);
+  }
+
+  /* ─── Callouts ───────────────────────────────────── */
+  .callout {
+    margin: 24px 0;
+    padding: 16px 20px;
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid;
+  }
+  .callout .tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .callout .tag::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .callout p { font-size: 14px; margin: 0; color: var(--text-2); }
+  .callout p + p { margin-top: 8px; }
+  .callout p strong { color: var(--text); }
+
+  .callout.pitfall  { border-left-color: var(--amber);   background: linear-gradient(to right, var(--amber-soft), transparent 40%), var(--surface); }
+  .callout.pitfall  .tag { color: var(--amber); }
+  .callout.perf     { border-left-color: var(--cyan);    background: linear-gradient(to right, var(--cyan-soft), transparent 40%), var(--surface); }
+  .callout.perf     .tag { color: var(--cyan); }
+  .callout.best     { border-left-color: var(--emerald); background: linear-gradient(to right, var(--emerald-soft), transparent 40%), var(--surface); }
+  .callout.best     .tag { color: var(--emerald); }
+  .callout.danger   { border-left-color: var(--red);     background: linear-gradient(to right, var(--red-soft), transparent 40%), var(--surface); }
+  .callout.danger   .tag { color: var(--red); }
+  .callout.api      { border-left-color: var(--blue);    background: linear-gradient(to right, var(--blue-soft), transparent 40%), var(--surface); }
+  .callout.api      .tag { color: var(--blue); }
+
+  /* ─── FIFO anatomy ───────────────────────────────── */
+  .anatomy {
+    margin: 28px 0;
+    padding: 32px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    position: relative;
+  }
+  .anatomy::before {
+    content: 'FIG · FIFO BEHAVIOUR';
+    position: absolute;
+    top: 12px; right: 16px;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-3);
+    letter-spacing: 0.15em;
+  }
+
+  .fifo-diagram {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    margin-top: 24px;
+    align-items: center;
+  }
+
+  .fifo-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--mono);
+    font-size: 11px;
+    width: 100%;
+    max-width: 640px;
+  }
+  .fifo-side-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--text-3);
+    width: 90px;
+    flex-shrink: 0;
+  }
+  .fifo-side-label.front { color: var(--blue); text-align: right; }
+  .fifo-side-label.back  { color: var(--emerald); }
+
+  .fifo-belt {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    padding: 8px 0;
+    border-top: 1px dashed var(--border-2);
+    border-bottom: 1px dashed var(--border-2);
+    background: var(--surface-2);
+    position: relative;
+  }
+  .fifo-belt::before, .fifo-belt::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: var(--mono);
+    font-size: 14px;
+  }
+
+  .fifo-item {
+    padding: 8px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border-2);
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-2);
+    min-width: 40px;
+    text-align: center;
+  }
+  .fifo-item.first { color: var(--blue); border-color: var(--blue); background: var(--blue-soft); }
+  .fifo-item.last  { color: var(--emerald); border-color: var(--emerald); background: var(--emerald-soft); }
+
+  .fifo-caption {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-3);
+    text-align: center;
+    margin-top: 4px;
+  }
+  .fifo-caption .arrow-l { color: var(--blue); }
+  .fifo-caption .arrow-r { color: var(--emerald); }
+
+  /* ─── Queue playground — horizontal conveyor ─────── */
+  .playground {
+    margin: 28px 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .pg-head {
+    background: linear-gradient(to right, var(--surface-2), var(--surface));
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .pg-title {
+    font-family: var(--head);
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .pg-title .pg-mark {
+    width: 22px; height: 22px;
+    display: grid; place-items: center;
+    background: var(--cyan-soft);
+    color: var(--cyan);
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .pg-stats {
+    display: flex;
+    gap: 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .pg-stat { color: var(--text-3); }
+  .pg-stat b { color: var(--text); font-weight: 600; margin-left: 4px; }
+  .pg-stat.count b { color: var(--cyan); }
+  .pg-stat.front b { color: var(--blue); }
+  .pg-stat.back  b { color: var(--emerald); }
+
+  .pg-viz {
+    padding: 40px 10px;
+    min-height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(34, 211, 238, 0.03) 0%, transparent 60%),
+      repeating-linear-gradient(0deg, transparent 0, transparent 23px, var(--border) 23px, var(--border) 24px),
+      repeating-linear-gradient(90deg, transparent 0, transparent 23px, var(--border) 23px, var(--border) 24px),
+      var(--surface-2);
+    position: relative;
+    overflow-x: auto;
+  }
+
+  /* Belt "rails" */
+  .belt-container {
+    position: relative;
+    min-width: 500px;
+    padding: 30px 110px 30px 110px;
+  }
+  .belt-rails {
+    position: absolute;
+    left: 0; right: 0; top: 50%;
+    transform: translateY(-50%);
+    height: 78px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      var(--surface-3) 8%,
+      var(--surface-3) 92%,
+      transparent 100%);
+    border-top: 1px dashed var(--border-2);
+    border-bottom: 1px dashed var(--border-2);
+    pointer-events: none;
+  }
+
+  /* FRONT marker on left */
+  .belt-marker {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    z-index: 2;
+  }
+  .belt-marker.front { left: 8px; color: var(--blue); }
+  .belt-marker.back  { right: 8px; color: var(--emerald); }
+  .belt-marker .marker-sym {
+    font-size: 18px;
+    line-height: 1;
+  }
+  .belt-marker.front .marker-sym { color: var(--blue); text-shadow: 0 0 10px rgba(37, 99, 235, 0.5); }
+  .belt-marker.back  .marker-sym { color: var(--emerald); text-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
+
+  /* Item row */
+  .belt-items {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+    min-height: 58px;
+  }
+
+  .belt-empty {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-3);
+    font-style: italic;
+  }
+
+  .belt-item {
+    width: 62px;
+    height: 58px;
+    display: grid;
+    place-items: center;
+    font-family: var(--mono);
+    font-size: 16px;
+    font-weight: 600;
+    border: 2px solid var(--border-2);
+    background: var(--surface);
+    color: var(--text);
+    border-radius: 6px;
+    position: relative;
+    animation: enqueueSlide 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+    flex-shrink: 0;
+    transition: border-color 0.3s, background 0.3s;
+  }
+
+  @keyframes enqueueSlide {
+    0%   { opacity: 0; transform: translateX(80px) scale(0.85); }
+    60%  { opacity: 1; transform: translateX(-4px) scale(1.04); }
+    100% { opacity: 1; transform: translateX(0) scale(1); }
+  }
+
+  .belt-item.dequeuing {
+    animation: dequeueSlide 0.5s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+    pointer-events: none;
+  }
+  @keyframes dequeueSlide {
+    0%   { opacity: 1; transform: translateX(0) scale(1); }
+    100% { opacity: 0; transform: translateX(-100px) scale(0.85); }
+  }
+
+  .belt-item.is-front {
+    border-color: var(--blue);
+    background: var(--blue-soft);
+    color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12), 0 4px 18px rgba(37, 99, 235, 0.2);
+  }
+  .belt-item.is-back {
+    border-color: var(--emerald);
+    background: var(--emerald-soft);
+    color: var(--emerald);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12), 0 4px 18px rgba(16, 185, 129, 0.2);
+  }
+  .belt-item.is-front.is-back {
+    /* single item — front + back */
+    border-color: var(--cyan);
+    background: var(--cyan-soft);
+    color: var(--cyan);
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.15);
+  }
+
+  .belt-item.peeking {
+    animation: peekFlash 0.9s ease-in-out;
+  }
+  @keyframes peekFlash {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12), 0 4px 18px rgba(37, 99, 235, 0.2); }
+    50%      { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.3), 0 4px 28px rgba(245, 158, 11, 0.5); border-color: var(--amber); color: var(--amber); background: var(--amber-soft); }
+  }
+
+  .belt-item::after {
+    content: attr(data-idx);
+    position: absolute;
+    bottom: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9px;
+    color: var(--text-3);
+    font-weight: 400;
+  }
+
+  /* Flow arrow under belt */
+  .belt-flow-label {
+    position: absolute;
+    bottom: 12px; left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-3);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .belt-flow-label .from { color: var(--emerald); }
+  .belt-flow-label .to   { color: var(--blue); }
+
+  /* ─── Controls ───────────────────────────────────── */
+  .pg-controls {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    background: var(--surface);
+  }
+  .pg-controls .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-right: 4px;
+  }
+  .pg-sep {
+    width: 1px; height: 22px;
+    background: var(--border);
+    margin: 0 6px;
+  }
+  .pg-input {
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 7px 10px;
+    border: 1px solid var(--border-2);
+    background: var(--surface-2);
+    color: var(--text);
+    border-radius: var(--radius-sm);
+    width: 90px;
+  }
+  .pg-input:focus { outline: none; border-color: var(--cyan); }
+
+  .btn {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 7px 12px;
+    border: 1px solid var(--border-2);
+    background: var(--surface-2);
+    color: var(--text);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:hover:not(:disabled) { border-color: var(--cyan); color: var(--cyan); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.primary {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: white;
+  }
+  .btn.primary:hover:not(:disabled) { background: #1e50c7; border-color: #1e50c7; color: white; }
+  .btn.emerald {
+    background: var(--emerald);
+    border-color: var(--emerald);
+    color: var(--bg);
+    font-weight: 600;
+  }
+  .btn.emerald:hover:not(:disabled) { background: #0d9668; border-color: #0d9668; color: var(--bg); }
+  .btn.amber {
+    border-color: rgba(245, 158, 11, 0.4);
+    color: var(--amber);
+  }
+  .btn.amber:hover:not(:disabled) { border-color: var(--amber); background: var(--amber-soft); color: var(--amber); }
+  .btn.danger {
+    border-color: var(--red-soft);
+    color: var(--red);
+  }
+  .btn.danger:hover:not(:disabled) { border-color: var(--red); background: var(--red-soft); color: var(--red); }
+
+  .pg-log {
+    background: var(--surface-2);
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 14px 20px;
+    max-height: 100px;
+    overflow-y: auto;
+  }
+  .pg-log-line { padding: 2px 0; color: var(--text-2); }
+  .pg-log-line .time { color: var(--text-3); margin-right: 10px; }
+  .pg-log-line .op { color: var(--cyan); font-weight: 600; }
+  .pg-log-line.enqueue .op { color: var(--emerald); }
+  .pg-log-line.dequeue .op { color: var(--blue); }
+  .pg-log-line.peek .op { color: var(--amber); }
+  .pg-log-line.error .op { color: var(--red); }
+
+  /* ─── BFS graph demo ─────────────────────────────── */
+  .bfs-demo {
+    margin: 28px 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .bfs-head {
+    padding: 16px 20px;
+    background: linear-gradient(to right, var(--surface-2), var(--surface));
+    border-bottom: 1px solid var(--border);
+  }
+  .bfs-head-title {
+    font-family: var(--head);
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .bfs-head-title .bmark {
+    width: 22px; height: 22px;
+    display: grid; place-items: center;
+    background: var(--blue-soft);
+    color: var(--blue);
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .bfs-head-sub {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--text-3);
+  }
+
+  .bfs-body {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 0;
+  }
+  .bfs-col {
+    padding: 24px;
+  }
+  .bfs-col + .bfs-col { border-left: 1px solid var(--border); }
+
+  .bfs-col h5 {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 14px;
+  }
+
+  /* Graph SVG container */
+  .bfs-graph-wrap {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    position: relative;
+  }
+  .bfs-graph {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .bfs-edge {
+    stroke: var(--border-2);
+    stroke-width: 2;
+    transition: stroke 0.3s;
+  }
+  .bfs-edge.active { stroke: var(--amber); stroke-width: 2.5; }
+
+  .bfs-node-circle {
+    fill: var(--surface-3);
+    stroke: var(--border-2);
+    stroke-width: 2;
+    transition: fill 0.4s, stroke 0.4s, r 0.25s;
+    cursor: pointer;
+  }
+  .bfs-node-circle:hover { stroke: var(--cyan); }
+
+  .bfs-node.queued .bfs-node-circle {
+    fill: var(--cyan-soft);
+    stroke: var(--cyan);
+  }
+  .bfs-node.current .bfs-node-circle {
+    fill: var(--amber-soft);
+    stroke: var(--amber);
+    filter: drop-shadow(0 0 8px var(--amber));
+  }
+  .bfs-node.visited .bfs-node-circle {
+    fill: var(--emerald-soft);
+    stroke: var(--emerald);
+  }
+  .bfs-node.start .bfs-node-circle {
+    stroke-dasharray: 4 3;
+  }
+
+  .bfs-node-label {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 700;
+    fill: var(--text);
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+    transition: fill 0.3s;
+  }
+  .bfs-node.queued .bfs-node-label  { fill: var(--cyan); }
+  .bfs-node.current .bfs-node-label { fill: var(--amber); }
+  .bfs-node.visited .bfs-node-label { fill: var(--emerald); }
+
+  /* Mini queue (horizontal) for BFS */
+  .bfs-queue {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    min-height: 62px;
+    overflow-x: auto;
+  }
+  .bfs-queue-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-3);
+    letter-spacing: 0.15em;
+    margin-right: 10px;
+    flex-shrink: 0;
+  }
+  .bfs-queue-label.front { color: var(--blue); }
+
+  .bfs-q-item {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    font-family: var(--mono);
+    font-size: 16px;
+    font-weight: 700;
+    border: 2px solid var(--cyan);
+    background: var(--cyan-soft);
+    color: var(--cyan);
+    border-radius: 5px;
+    animation: enqueueSlide 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+    flex-shrink: 0;
+  }
+  .bfs-q-item.dequeuing {
+    animation: dequeueSlide 0.4s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+  }
+  .bfs-q-empty {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-3);
+    font-style: italic;
+    padding-left: 10px;
+  }
+
+  /* BFS controls */
+  .bfs-controls {
+    margin-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .bfs-status {
+    margin-top: 14px;
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    font-family: var(--mono);
+    font-size: 13px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .bfs-status.running {
+    border-color: var(--amber);
+    background: var(--amber-soft);
+    color: var(--amber);
+  }
+  .bfs-status.done {
+    border-color: var(--emerald);
+    background: var(--emerald-soft);
+    color: var(--emerald);
+  }
+  .bfs-status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--text-3);
+  }
+  .bfs-status.running .bfs-status-dot { background: var(--amber); box-shadow: 0 0 10px var(--amber); animation: pulse 1s infinite; }
+  .bfs-status.done    .bfs-status-dot { background: var(--emerald); box-shadow: 0 0 10px var(--emerald); }
+
+  .bfs-visited-order {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .bfs-visited-order .label {
+    color: var(--text-3);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-right: 8px;
+  }
+  .bfs-visited-order .vnode {
+    display: inline-block;
+    padding: 2px 8px;
+    margin: 2px 3px;
+    background: var(--emerald-soft);
+    color: var(--emerald);
+    border-radius: 3px;
+    font-weight: 600;
+  }
+
+  .bfs-legend {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-3);
+    letter-spacing: 0.08em;
+  }
+  .bfs-legend .leg {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .bfs-legend .sw {
+    width: 12px; height: 12px;
+    border-radius: 3px;
+    border: 2px solid var(--border-2);
+    background: var(--surface-3);
+  }
+  .bfs-legend .leg.q .sw { border-color: var(--cyan); background: var(--cyan-soft); }
+  .bfs-legend .leg.c .sw { border-color: var(--amber); background: var(--amber-soft); }
+  .bfs-legend .leg.v .sw { border-color: var(--emerald); background: var(--emerald-soft); }
+
+  /* ─── Matrix ─────────────────────────────────────── */
+  .matrix {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 24px 0;
+    font-size: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+  .matrix th, .matrix td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .matrix thead th {
+    background: var(--surface-2);
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 500;
+    color: var(--text-2);
+  }
+  .matrix tbody td {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--text-2);
+  }
+  .matrix tbody td:first-child { color: var(--text); font-weight: 500; }
+  .matrix tbody tr:last-child td { border-bottom: none; }
+  .matrix tbody tr:hover { background: var(--surface-2); }
+
+  .big-o {
+    display: inline-block;
+    padding: 2px 8px;
+    font-family: var(--mono);
+    font-weight: 600;
+    border-radius: 3px;
+    font-size: 12px;
+  }
+  .big-o.good { background: var(--emerald-soft); color: var(--emerald); }
+  .big-o.mid  { background: var(--cyan-soft); color: var(--cyan); }
+  .big-o.bad  { background: var(--amber-soft); color: var(--amber); }
+  .big-o.no   { background: var(--border); color: var(--text-3); font-style: italic; }
+
+  /* ─── Decision cards ─────────────────────────────── */
+  .decision-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 28px 0;
+  }
+  .dcard {
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    position: relative;
+    overflow: hidden;
+  }
+  .dcard::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 48px; height: 2px;
+  }
+  .dcard.a::before { background: var(--emerald); }
+  .dcard.b::before { background: var(--cyan); }
+  .dcard h4 {
+    font-family: var(--head);
+    font-weight: 700;
+    font-size: 18px;
+    margin-bottom: 6px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .dcard h4 code {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--cyan);
+    font-weight: 600;
+  }
+  .dcard .sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--text-3);
+    margin-bottom: 16px;
+  }
+  .dcard ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .dcard li {
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--text-2);
+    padding-left: 20px;
+    position: relative;
+    line-height: 1.55;
+  }
+  .dcard.a li::before { content: '+'; color: var(--emerald); font-weight: 700; position: absolute; left: 0; }
+  .dcard.b li::before { content: '+'; color: var(--cyan);    font-weight: 700; position: absolute; left: 0; }
+
+  /* ─── Next module ────────────────────────────────── */
+  .next-module {
+    margin: 48px 0;
+    padding: 28px;
+    background: linear-gradient(135deg, var(--surface), var(--surface-2));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .next-module:hover {
+    border-color: var(--blue);
+    transform: translateY(-2px);
+  }
+  .next-module::after {
+    content: '';
+    position: absolute;
+    top: -50%; right: -10%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, var(--blue-soft) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .next-module .label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 4px;
+  }
+  .next-module h3 {
+    font-family: var(--head);
+    font-weight: 700;
+    font-size: 22px;
+    color: var(--text);
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+  .next-module h3 .gn { color: var(--text-3); }
+  .next-module p { font-size: 13px; color: var(--text-2); margin: 0; }
+  .next-module .arrow {
+    font-family: var(--mono);
+    font-size: 28px;
+    color: var(--cyan);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  .next-module:hover .arrow { transform: translateX(6px); }
+
+  footer {
+    padding: 40px 0;
+    border-top: 1px solid var(--border);
+  }
+  footer .footer-inner {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+  footer .v { color: var(--text-2); }
+  footer a { color: inherit; text-decoration: none; transition: color 0.15s; }
+  footer a:hover { color: var(--cyan); }
+
+  /* ─── Responsive ─────────────────────────────────── */
+  @media (max-width: 980px) {
+    .layout { grid-template-columns: 1fr; gap: 0; }
+    aside.toc { display: none; }
+    .bfs-body { grid-template-columns: 1fr; }
+    .bfs-col + .bfs-col { border-left: none; border-top: 1px solid var(--border); }
+  }
+  @media (max-width: 768px) {
+    .wrap { padding: 0 20px; }
+    .topnav-inner { padding: 0 20px; }
+    .brand-tag { display: none; }
+    .article-header h1 { font-size: 36px; }
+    .decision-grid { grid-template-columns: 1fr; }
+    .pg-head { flex-direction: column; align-items: flex-start; }
+    .pg-stats { width: 100%; justify-content: space-between; }
+    .next-module { flex-direction: column; text-align: left; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── TOP NAV ────────────────────────────────── -->
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a href="index.html" class="brand">
+      <span class="brand-mark">C#</span>
+      <span>Data Structures</span>
+      <span class="brand-sep"></span>
+      <span class="brand-tag">.NET 10 &middot; C# 14</span>
+    </a>
+    <a href="index.html" class="back-link">&larr; Back to library</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <!-- ─── CRUMB ──────────────────────────────────── -->
+  <div class="crumb">
+    <a href="index.html">Library</a>
+    <span class="sep">/</span>
+    <span>FIFO</span>
+    <span class="sep">/</span>
+    <span>Queue</span>
+  </div>
+
+  <!-- ─── ARTICLE HEADER ─────────────────────────── -->
+  <header class="article-header">
+    <div class="module-tag">
+      <span class="mdot"></span>
+      MODULE 04 &middot; FIFO &middot; LINEAR
+    </div>
+    <h1>Queue<span class="generic">&lt;T&gt;</span></h1>
+    <p class="article-sub">
+      First-in, first-out. Items enter at the back, leave from the front &mdash; the
+      discipline of fair ordering. Backing nearly every task scheduler, message buffer, and
+      breadth-first search ever written, <code>Queue&lt;T&gt;</code> is the quiet workhorse
+      of systems that have to wait their turn.
+    </p>
+
+    <div class="meta-row">
+      <div class="meta-cell">
+        <span class="label">Runtime</span>
+        <span class="value">.NET 10.0.200</span>
+      </div>
+      <div class="meta-cell">
+        <span class="label">Language</span>
+        <span class="value">C# 14</span>
+      </div>
+      <div class="meta-cell">
+        <span class="label">Reading time</span>
+        <span class="value">~13 min</span>
+      </div>
+      <div class="meta-cell">
+        <span class="label">Level</span>
+        <span class="value">Beginner &rarr; Intermediate</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ─── LAYOUT ─────────────────────────────────── -->
+  <div class="layout">
+
+    <aside class="toc">
+      <div class="toc-label">On this page</div>
+      <ol>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#anatomy">FIFO anatomy</a></li>
+        <li><a href="#playground">Live playground</a></li>
+        <li><a href="#operations">Core operations</a></li>
+        <li><a href="#complexity">Complexity matrix</a></li>
+        <li><a href="#choose">When to choose</a></li>
+        <li><a href="#bfs">BFS graph traversal</a></li>
+        <li><a href="#modern">Modern C# 14</a></li>
+        <li><a href="#pitfalls">Pitfalls</a></li>
+      </ol>
+    </aside>
+
+    <div class="content">
+
+      <!-- ═══ 01 OVERVIEW ═══ -->
+      <section id="overview">
+        <h2><span class="sec-num">01</span>Overview</h2>
+        <p>
+          A queue enforces the fairest possible rule: whoever arrived first leaves first.
+          Items enter at the <strong>back</strong> via <code class="inline">Enqueue</code>
+          and leave from the <strong>front</strong> via <code class="inline">Dequeue</code>.
+          No queue-jumping, no shortcuts &mdash; hence <strong>FIFO</strong>, first-in,
+          first-out.
+        </p>
+        <p>
+          If <code class="inline">Stack&lt;T&gt;</code> is a pile of plates, a queue is the
+          line outside a post office: everyone patient, everyone in order. When you need
+          <em>arrival order preserved</em> &mdash; print jobs, tasks dispatched to worker
+          threads, messages between services, levels of a tree explored one layer at a time
+          &mdash; a queue is almost always the right shape.
+        </p>
+
+        <div class="callout api">
+          <div class="tag">Namespace</div>
+          <p>
+            <code class="inline api">Queue&lt;T&gt;</code> lives in
+            <code class="inline api">System.Collections.Generic</code>. Internally it&#39;s
+            backed by a <strong>circular buffer</strong> &mdash; a fixed-capacity array with
+            head and tail indices that wrap around. This is the secret sauce that keeps
+            both <code class="inline">Enqueue</code> and <code class="inline">Dequeue</code>
+            at <code class="inline">O(1)</code> without any shifting. For thread-safe use,
+            reach for <code class="inline api">ConcurrentQueue&lt;T&gt;</code>.
+          </p>
+        </div>
+      </section>
+
+      <!-- ═══ 02 ANATOMY ═══ -->
+      <section id="anatomy">
+        <h2><span class="sec-num">02</span>FIFO anatomy</h2>
+        <p>
+          Picture a conveyor belt moving left. New items enter on the right
+          (<code class="inline">Enqueue</code>) and drop off on the left
+          (<code class="inline">Dequeue</code>). The item at the front is the oldest;
+          the item at the back is the newest.
+        </p>
+
+        <div class="anatomy">
+          <div class="fifo-diagram">
+            <div class="fifo-row">
+              <span class="fifo-side-label front">Front &larr;</span>
+              <div class="fifo-belt">
+                <div class="fifo-item first">A</div>
+                <div class="fifo-item">B</div>
+                <div class="fifo-item">C</div>
+                <div class="fifo-item last">D</div>
+              </div>
+              <span class="fifo-side-label back">&larr; Back</span>
+            </div>
+            <div class="fifo-caption">
+              <span class="arrow-l">Dequeue()</span> takes &ldquo;A&rdquo; &middot; <span class="arrow-r">Enqueue(&apos;E&apos;)</span> appends &ldquo;E&rdquo; after &ldquo;D&rdquo;
+            </div>
+          </div>
+        </div>
+
+        <div class="code-block">
+          <div class="code-head">
+            <span class="filename">Program.cs &middot; a print job queue</span>
+            <button class="copy-btn" data-copy="anatomy">Copy</button>
+          </div>
+<pre id="code-anatomy"><span class="tok-key">using</span> System.Collections.Generic;
+
+<span class="tok-key">var</span> printJobs = <span class="tok-key">new</span> <span class="tok-type">Queue</span>&lt;<span class="tok-key">string</span>&gt;();
+printJobs.<span class="tok-fn">Enqueue</span>(<span class="tok-str">"invoice.pdf"</span>);        <span class="tok-com">// arrives first</span>
+printJobs.<span class="tok-fn">Enqueue</span>(<span class="tok-str">"report.docx"</span>);
+printJobs.<span class="tok-fn">Enqueue</span>(<span class="tok-str">"photo.jpg"</span>);          <span class="tok-com">// arrives last</span>
+
+<span class="tok-type">Console</span>.<span class="tok-fn">WriteLine</span>(printJobs.Count);        <span class="tok-com">// 3</span>
+<span class="tok-type">Console</span>.<span class="tok-fn">WriteLine</span>(printJobs.<span class="tok-fn">Peek</span>());       <span class="tok-com">// "invoice.pdf"  — still in queue</span>
+<span class="tok-type">Console</span>.<span class="tok-fn">WriteLine</span>(printJobs.<span class="tok-fn">Dequeue</span>());    <span class="tok-com">// "invoice.pdf"  — served first</span>
+<span class="tok-type">Console</span>.<span class="tok-fn">WriteLine</span>(printJobs.<span class="tok-fn">Dequeue</span>());    <span class="tok-com">// "report.docx"</span>
+<span class="tok-type">Console</span>.<span class="tok-fn">WriteLine</span>(printJobs.Count);        <span class="tok-com">// 1</span></pre>
+        </div>
+      </section>
+
+      <!-- ═══ 03 PLAYGROUND ═══ -->
+      <section id="playground">
+        <h2><span class="sec-num">03</span>Live playground</h2>
+        <p>
+          Interact with an actual queue. <strong>Enqueue</strong> slides a new item in from
+          the right, <strong>Dequeue</strong> glides the front item off to the left. The
+          blue highlight marks the <em>front</em> (next to leave); the emerald highlight
+          marks the <em>back</em> (just arrived).
+        </p>
+
+        <div class="playground">
+          <div class="pg-head">
+            <span class="pg-title">
+              <span class="pg-mark">&lt;-</span>
+              Queue&lt;int&gt; &middot; live
+            </span>
+            <div class="pg-stats">
+              <span class="pg-stat count">Count<b id="pg-count">0</b></span>
+              <span class="pg-stat front">Front<b id="pg-front">null</b></span>
+              <span class="pg-stat back">Back<b id="pg-back">null</b></span>
+              <span class="pg-stat">Enq<b id="pg-enq">0</b></span>
+              <span class="pg-stat">Deq<b id="pg-deq">0</b></span>
+            </div>
+          </div>
+          <div class="pg-viz">
+            <div class="belt-container">
+              <div class="belt-rails"></div>
+
+              <div class="belt-marker front">
+                <span class="marker-sym">&larr;</span>
+                Front
+              </div>
+              <div class="belt-marker back">
+                <span class="marker-sym">&larr;</span>
+                Back
+              </div>
+
+              <div class="belt-items" id="belt-items">
+                <div class="belt-empty">// empty queue — Enqueue to start the belt</div>
+              </div>
+
+              <div class="belt-flow-label">
+                <span class="from">enter right</span> &nbsp;&nbsp;&rarr;&nbsp;&nbsp; <span class="to">exit left</span>
+              </div>
+            </div>
+          </div>
+          <div class="pg-controls">
+            <span class="label">Value</span>
+            <input type="text" class="pg-input" id="enq-val" value="10">
+            <button class="btn emerald" onclick="queueEnqueue()">Enqueue</button>
+            <button class="btn primary" onclick="queueDequeue()">Dequeue</button>
+            <button class="btn amber" onclick="queuePeek()">Peek</button>
+
+            <span class="pg-sep"></span>
+
+            <button class="btn" onclick="queueEnqueueRandom()">Enqueue random</button>
+            <button class="btn" onclick="queueEnqueueMany(3)">Enqueue ×3</button>
+
+            <span class="pg-sep"></span>
+
+            <button class="btn danger" onclick="queueClear()">Clear</button>
+          </div>
+          <div class="pg-log" id="pg-log">
+            <div class="pg-log-line"><span class="time">[ready]</span><span class="op">INIT</span> &mdash; new Queue&lt;int&gt;() &mdash; empty belt, circular buffer allocated on first Enqueue.</div>
+          </div>
+        </div>
+
+        <div class="callout perf">
+          <div class="tag">Watch for this</div>
+          <p>
+            <strong>Enqueue</strong> slides in from the right (the &ldquo;back&rdquo;) with a
+            small settle &mdash; that&#39;s <code class="inline">queue.Enqueue(x)</code> in
+            <code class="inline">O(1)</code>. <strong>Dequeue</strong> ejects the front item
+            to the left &mdash; also <code class="inline">O(1)</code>, thanks to the internal
+            circular buffer. No shifting, no copying. <strong>Peek</strong> flashes the front
+            amber without changing anything.
+          </p>
+        </div>
+      </section>
+
+      <!-- ═══ 04 OPERATIONS ═══ -->
+      <section id="operations">
+        <h2><span class="sec-num">04</span>Core operations</h2>
+        <p>
+          Six methods carry almost every use of a queue. As with <code class="inline">Stack&lt;T&gt;</code>,
+          the <code class="inline">Try*</code> variants are the modern, exception-free way
+          to access the front.
+        </p>
+
+        <div class="tabs">
+          <div class="tab-bar" id="ops-tabs">
+            <button class="tab-btn active" data-tab="o1">Enqueue <span class="bigo">O(1)</span></button>
+            <button class="tab-btn" data-tab="o2">Dequeue <span class="bigo">O(1)</span></button>
+            <button class="tab-btn" data-tab="o3">Peek <span class="bigo">O(1)</span></button>
+            <button class="tab-btn" data-tab="o4">TryDequeue / TryPeek <span class="bigo">O(1)</span></button>
+            <button class="tab-btn" data-tab="o5">Contains <span class="bigo">O(n)</span></button>
+            <button class="tab-btn" data-tab="o6">Iteration <span class="bigo">O(n)</span></button>
+          </div>
+
+          <div class="tab-panel active" id="o1">
+            <p class="panel-intro">Adds an item to the back. The circular buffer grows (doubles) only when capacity runs out &mdash; otherwise the tail index just advances.</p>
+            <div class="code-block">
+              <div class="code-head"><span class="filename">Enqueue / arrive at back</span><button class="copy-btn" data-copy="o1">Copy</button></div>
+<pre id="code-o1"><span class="tok-key">var</span> tasks = <span class="tok-key">new</span> <span class="tok-type">Queue</span>&lt;<span class="tok-key">string</span>&gt;();
+tasks.<span class="tok-fn">Enqueue</span>(<span class="tok-str">"fetch user"</span>);
+tasks.<span class="tok-fn">Enqueue</span>(<span class="tok-str">"validate input"</span>);
+tasks.<span class="tok-fn">Enqueue</span>(<span class="tok-str">"write to db"</span>);
+
+<span class="tok-com">// Front → "fetch user" | Back → "write to db"</span>
+<span class="tok-type">Console</span>.<span class="tok-fn">WriteLine</span>(tasks.Count);        <span class="tok-com">// 3</span>
+
+<span class="tok-com">// Pre-size if you know the throughput ceiling</span>
+<span class="tok-key">var</span> hot = <span class="tok-key">new</span> <span class="tok-type">Queue</span>&lt;<span class="tok-key">int</span>&gt;(capacity: <span class="tok-num">1024</span>);</pre>
+            </div>
+          </div>
+
+          <div class="tab-panel" id="o2">
+            <p class="panel-intro">Removes and returns the front item. Throws <code class="inline">InvalidOperationException</code> on an empty queue &mdash; always prefer <code class="inline">TryDequeue</code> unless you&#39;ve already checked <code class="inline">Count</code>.</p>
+            <div class="code-block">
+              <div class="code-head"><span class="filename">Dequeue / leave from front</span><button class="copy-btn" data-copy="o2">Copy</button></div>
+<pre id="code-o2"><span class="tok-key">var</span> q = <span class="tok-key">new</span> <span class="tok-type">Queue</span>&lt;<span class="tok-key">int</span>&gt;([<span class="tok-num">10</span>, <span class="tok-num">20</span>, <span class="tok-num">30</span>]);
+<span class="tok-com">// Collection expression preserves insertion order — 10 is at the front</span>
+
+<span class="tok-key">int</span> first = q.<span class="tok-fn">Dequeue</span>();      <span class="tok-com">// 10</span>
+<span class="tok-key">int</span> second = q.<span class="tok-fn">Dequeue</span>();     <span class="tok-com">// 20</span>
+<span class="tok-type">Console</span>.<span class="tok-fn">WriteLine</span>(q.Count);       <span class="tok-com">// 1</span>
+
+<span class="tok-com">// Empty queue throws — dangerous overload</span>
+<span class="tok-key">var</span> empty = <span class="tok-key">new</span> <span class="tok-type">Queue</span>&lt;<span class="tok-key">int</span>&gt;();
+<span class="tok-com">// empty.Dequeue();   // InvalidOperationException!</span></pre>
+            </div>
+          </div>
+
+          <div class="tab-panel" id="o3">
+            <p class="panel-intro">Returns the front <em>without</em> removing it. Useful when the decision to actually dequeue depends on inspecting the value first.</p>
+            <div class="code-block">
+              <div class="code-head"><span class="filename">Peek / inspect front</span><button class="copy-btn" data-copy="o3">Copy</button></div>
+<pre id="code-o3"><span class="tok-key">var</span> events = <span class="tok-key">new</span> <span class="tok-type">Queue</span>&lt;<span class="tok-type">Event</span>&gt;();
+events.<span class="tok-fn">Enqueue</span>(<span class="tok-key">new</span> <span class="tok-type">Event</span>(<span class="tok-str">"click"</span>, priority: <span class="tok-num">3</span>));
+events.<span class="tok-fn">Enqueue</span>(<span class="tok-key">new</span> <span class="tok-type">Event</span>(<span class="tok-str">"scroll"</span>, priority: <span class="tok-num">1</span>));
+
+<span class="tok-com">// Only handle if it's urgent enough</span>
+<span class="tok-key">if</span> (events.<span class="tok-fn">Peek</span>().Priority &gt;= <span class="tok-num">2</span>)
+    <span class="tok-type">Handle</span>(events.<span class="tok-fn">Dequeue</span>());</pre>
+            </div>
+          </div>
+
+          <div class="tab-panel" id="o4">
+            <p class="panel-intro">The modern, exception-free variants. Idiomatic for any code that can&#39;t guarantee the queue is non-empty &mdash; which is most code.</p>
+            <div class="code-block">
+              <div class="code-head"><span class="filename">TryDequeue / TryPeek</span><button class="copy-btn" data-copy="o4">Copy</button></div>
+<pre id="code-o4"><span class="tok-key">var</span> mailbox = <span class="tok-key">new</span> <span class="tok-type">Queue</span>&lt;<span class="tok-type">Message</span>&gt;();
+
+<span class="tok-com">// Drain loop — clean and exception-free</span>
+<span class="tok-key">while</span> (mailbox.<span class="tok-fn">TryDequeue</span>(<span class="tok-key">out var</span> msg))
+    <span class="tok-fn">Process</span>(msg);
+
+<span class="tok-com">// Peek without risking an exception</span>
+<span class="tok-key">if</span> (mailbox.<span class="tok-fn">TryPeek</span>(<span class="tok-key">out var</span> next))
+    <span class="tok-type">Console</span>.<span class="tok-fn">WriteLine</span>($<span class="tok-str">"next: {next}"</span>);
+<span class="tok-key">else</span>
+    <span class="tok-type">Console</span>.<span class="tok-fn">WriteLine</span>(<span class="tok-str">"nothing pending"</span>);</pre>
+            </div>
+          </div>
+
+          <div class="tab-panel" id="o5">
+            <p class="panel-intro">Linear scan from front to back. If your code relies on <code class="inline">Contains</code>, consider pairing the queue with a <code class="inline">HashSet&lt;T&gt;</code> for <code class="inline">O(1)</code> membership checks.</p>
+            <div class="code-block">
+              <div class="code-head"><span class="filename">Contains &middot; linear search</span><button class="copy-btn" data-copy="o5">Copy</button></div>
+<pre id="code-o5"><span class="tok-key">var</span> pending = <span class="tok-key">new</span> <span class="tok-type">Queue</span>&lt;<span class="tok-key">int</span>&gt;();
+<span class="tok-key">var</span> pendingSet = <span class="tok-key">new</span> <span class="tok-type">HashSet</span>&lt;<span class="tok-key">int</span>&gt;();   <span class="tok-com">// mirror for fast lookup</span>
+
+<span class="tok-key">void</span> <span class="tok-fn">Add</span>(<span class="tok-key">int</span> id)
+{
+    <span class="tok-key">if</span> (pendingSet.<span class="tok-fn">Add</span>(id))                <span class="tok-com">// O(1) — deduped</span>
+        pending.<span class="tok-fn">Enqueue</span>(id);                  <span class="tok-com">// O(1)</span>
+}
+
+<span class="tok-com">// Avoid scanning the whole queue every time</span>
+<span class="tok-key">bool</span> isPending = pendingSet.<span class="tok-fn">Contains</span>(<span class="tok-num">42</span>);   <span class="tok-com">// O(1)</span></pre>
+            </div>
+          </div>
+
+          <div class="tab-panel" id="o6">
+            <p class="panel-intro">Iteration walks from <strong>front to back</strong> &mdash; the natural, insertion-preserving order. Unlike <code class="inline">Stack&lt;T&gt;</code> this lines up with intuition.</p>
+            <div class="code-block">
+              <div class="code-head"><span class="filename">foreach / ToArray</span><button class="copy-btn" data-copy="o6">Copy</button></div>
+<pre id="code-o6"><span class="tok-key">var</span> q = <span class="tok-key">new</span> <span class="tok-type">Queue</span>&lt;<span class="tok-key">int</span>&gt;();
+q.<span class="tok-fn">Enqueue</span>(<span class="tok-num">1</span>);
+q.<span class="tok-fn">Enqueue</span>(<span class="tok-num">2</span>);
+q.<span class="tok-fn">Enqueue</span>(<span class="tok-num">3</span>);
+
+<span class="tok-key">foreach</span> (<span class="tok-key">var</span> n <span class="tok-key">in</span> q)
+    <span class="tok-type">Console</span>.<span class="tok-fn">Write</span>(n);          <span class="tok-com">// 123 — front to back, as inserted</span>
+
+<span class="tok-key">int</span>[] snapshot = q.<span class="tok-fn">ToArray</span>();
+<span class="tok-com">// snapshot: [1, 2, 3]</span>
+
+<span class="tok-com">// Iteration does NOT dequeue — the queue is unchanged</span>
+<span class="tok-type">Console</span>.<span class="tok-fn">WriteLine</span>(q.Count);       <span class="tok-com">// 3</span></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ 05 COMPLEXITY ═══ -->
+      <section id="complexity">
+        <h2><span class="sec-num">05</span>Complexity matrix</h2>
+
+        <table class="matrix">
+          <thead>
+            <tr><th>Operation</th><th>Queue&lt;T&gt;</th><th>List&lt;T&gt; (as queue)</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Enqueue</td>                 <td><span class="big-o good">O(1)*</span></td><td><span class="big-o good">O(1)*</span></td><td>*amortised, occasional resize</td></tr>
+            <tr><td>Dequeue</td>                 <td><span class="big-o good">O(1)</span></td> <td><span class="big-o bad">O(n)</span></td> <td>List shifts every element left</td></tr>
+            <tr><td>Peek</td>                    <td><span class="big-o good">O(1)</span></td> <td><span class="big-o good">O(1)</span></td> <td>Index lookup</td></tr>
+            <tr><td>TryDequeue / TryPeek</td>    <td><span class="big-o good">O(1)</span></td> <td><span class="big-o no">n/a</span></td>   <td>Exception-free</td></tr>
+            <tr><td>Contains</td>                <td><span class="big-o bad">O(n)</span></td>  <td><span class="big-o bad">O(n)</span></td>  <td>Linear scan</td></tr>
+            <tr><td>Count</td>                   <td><span class="big-o good">O(1)</span></td> <td><span class="big-o good">O(1)</span></td> <td>Cached property</td></tr>
+            <tr><td>Clear</td>                   <td><span class="big-o bad">O(n)</span></td>  <td><span class="big-o bad">O(n)</span></td>  <td>Must null out refs</td></tr>
+            <tr><td>ToArray</td>                 <td><span class="big-o bad">O(n)</span></td>  <td><span class="big-o bad">O(n)</span></td>  <td>Copies, unwinds circular buffer</td></tr>
+            <tr><td>Access index <code class="inline">[i]</code></td><td><span class="big-o no">n/a</span></td><td><span class="big-o good">O(1)</span></td><td>No indexer on Queue</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout perf">
+          <div class="tag">The circular buffer trick</div>
+          <p>
+            <code class="inline">Queue&lt;T&gt;</code> is backed by a plain array, but with
+            two integer indices &mdash; <code class="inline">_head</code> (front) and
+            <code class="inline">_tail</code> (back). Dequeue increments
+            <code class="inline">_head</code>; Enqueue increments <code class="inline">_tail</code>.
+            Both wrap around to zero at the end. Nothing ever shifts. When
+            <code class="inline">_tail</code> catches up to <code class="inline">_head</code>,
+            the array doubles &mdash; the same capacity-growth policy as
+            <code class="inline">List&lt;T&gt;</code> and <code class="inline">Stack&lt;T&gt;</code>.
+          </p>
+        </div>
+      </section>
+
+      <!-- ═══ 06 CHOOSE ═══ -->
+      <section id="choose">
+        <h2><span class="sec-num">06</span>When to choose which</h2>
+        <p>
+          <code class="inline">Queue&lt;T&gt;</code> and <code class="inline">Stack&lt;T&gt;</code>
+          are the same collection in two mirror-image disciplines. The question is simply:
+          which end do you want to pull from?
+        </p>
+
+        <div class="decision-grid">
+          <div class="dcard a">
+            <h4>Pick <code>Queue&lt;T&gt;</code></h4>
+            <div class="sub">FIFO &middot; fair ordering</div>
+            <ul>
+              <li>Task / job schedulers (oldest task first)</li>
+              <li>Breadth-first search of graphs and trees</li>
+              <li>Producer &harr; consumer message buffers</li>
+              <li>Print queues, event pipelines, log shipping</li>
+              <li>Web server request dispatch</li>
+              <li>Simulation of real-world waiting lines</li>
+            </ul>
+          </div>
+          <div class="dcard b">
+            <h4>Pick <code>Stack&lt;T&gt;</code> instead</h4>
+            <div class="sub">LIFO &middot; the opposite discipline</div>
+            <ul>
+              <li>Undo &amp; redo history</li>
+              <li>Depth-first search of graphs and trees</li>
+              <li>Expression parsing, balanced brackets</li>
+              <li>Backtracking algorithms (mazes, N-queens)</li>
+              <li>Call-stack simulation or trampolining</li>
+              <li>See &mdash; <a href="stack.html" style="color:var(--cyan);text-decoration:none;">Module 03</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout best">
+          <div class="tag">Decision rule</div>
+          <p>
+            If <em>order of arrival matters</em> and you want the oldest served first, use
+            a queue. If you want the <em>newest first</em>, use a stack. If you need
+            priorities (most important first), reach for
+            <code class="inline api">PriorityQueue&lt;TElement, TPriority&gt;</code> &mdash; a
+            heap-backed specialisation added in .NET 6.
+          </p>
+        </div>
+      </section>
+
+      <!-- ═══ 07 BFS ═══ -->
+      <section id="bfs">
+        <h2><span class="sec-num">07</span>BFS graph traversal</h2>
+        <p>
+          The canonical queue problem. <strong>Breadth-first search</strong> explores a
+          graph level by level &mdash; visiting every neighbour of the start node before any
+          of <em>their</em> neighbours. The queue is what makes it level-order: as you
+          discover new nodes you enqueue them at the back, and you always dequeue the
+          oldest from the front. The result is a wave expanding outward from the source.
+        </p>
+
+        <div class="bfs-demo">
+          <div class="bfs-head">
+            <div class="bfs-head-title">
+              <span class="bmark">&#x2737;</span>
+              Live BFS explorer
+            </div>
+            <div class="bfs-head-sub">Click any node to start BFS from there, or step through manually.</div>
+          </div>
+
+          <div class="bfs-body">
+            <div class="bfs-col">
+              <h5>Graph (click node to restart from it)</h5>
+              <div class="bfs-graph-wrap">
+                <svg class="bfs-graph" viewBox="0 0 500 320" id="bfs-graph">
+                  <!-- Edges -->
+                  <line class="bfs-edge" data-edge="A-B" x1="250" y1="50" x2="130" y2="140"/>
+                  <line class="bfs-edge" data-edge="A-C" x1="250" y1="50" x2="370" y2="140"/>
+                  <line class="bfs-edge" data-edge="B-D" x1="130" y1="140" x2="60"  y2="250"/>
+                  <line class="bfs-edge" data-edge="B-E" x1="130" y1="140" x2="190" y2="250"/>
+                  <line class="bfs-edge" data-edge="C-F" x1="370" y1="140" x2="310" y2="250"/>
+                  <line class="bfs-edge" data-edge="C-G" x1="370" y1="140" x2="440" y2="250"/>
+                  <line class="bfs-edge" data-edge="E-F" x1="190" y1="250" x2="310" y2="250"/>
+
+                  <!-- Nodes -->
+                  <g class="bfs-node" data-id="A" transform="translate(250, 50)">
+                    <circle class="bfs-node-circle" r="22"/>
+                    <text class="bfs-node-label">A</text>
+                  </g>
+                  <g class="bfs-node" data-id="B" transform="translate(130, 140)">
+                    <circle class="bfs-node-circle" r="22"/>
+                    <text class="bfs-node-label">B</text>
+                  </g>
+                  <g class="bfs-node" data-id="C" transform="translate(370, 140)">
+                    <circle class="bfs-node-circle" r="22"/>
+                    <text class="bfs-node-label">C</text>
+                  </g>
+                  <g class="bfs-node" data-id="D" transform="translate(60, 250)">
+                    <circle class="bfs-node-circle" r="22"/>
+                    <text class="bfs-node-label">D</text>
+                  </g>
+                  <g class="bfs-node" data-id="E" transform="translate(190, 250)">
+                    <circle class="bfs-node-circle" r="22"/>
+                    <text class="bfs-node-label">E</text>
+                  </g>
+                  <g class="bfs-node" data-id="F" transform="translate(310, 250)">
+                    <circle class="bfs-node-circle" r="22"/>
+                    <text class="bfs-node-label">F</text>
+                  </g>
+                  <g class="bfs-node" data-id="G" transform="translate(440, 250)">
+                    <circle class="bfs-node-circle" r="22"/>
+                    <text class="bfs-node-label">G</text>
+                  </g>
+                </svg>
+              </div>
+
+              <div class="bfs-legend">
+                <span class="leg"><span class="sw"></span>unvisited</span>
+                <span class="leg q"><span class="sw"></span>in queue</span>
+                <span class="leg c"><span class="sw"></span>processing</span>
+                <span class="leg v"><span class="sw"></span>visited</span>
+              </div>
+
+              <div class="bfs-controls">
+                <span class="label" style="font-family:var(--mono);font-size:10px;color:var(--text-3);letter-spacing:0.1em;text-transform:uppercase;">Start from</span>
+                <button class="btn" onclick="startBFS('A')">A</button>
+                <button class="btn" onclick="startBFS('B')">B</button>
+                <button class="btn" onclick="startBFS('C')">C</button>
+                <button class="btn primary" onclick="runBFS()" id="bfs-run">Run</button>
+                <button class="btn" onclick="stepBFS()" id="bfs-step">Step</button>
+                <button class="btn danger" onclick="resetBFS()">Reset</button>
+              </div>
+
+              <div class="bfs-status" id="bfs-status">
+                <span class="bfs-status-dot"></span>
+                <span id="bfs-status-text">Ready &mdash; pick a starting node and press <strong style="color:var(--text)">Run</strong>.</span>
+              </div>
+
+              <div class="bfs-visited-order" id="bfs-visited">
+                <span class="label">Visited order</span>
+                <span id="bfs-visited-list" style="color:var(--text-3);font-style:italic;">(none yet)</span>
+              </div>
+            </div>
+
+            <div class="bfs-col">
+              <h5>Queue&lt;string&gt; state</h5>
+              <div class="bfs-queue">
+                <span class="bfs-queue-label front">FRONT &rarr;</span>
+                <div id="bfs-queue-items" style="display:flex;gap:4px;align-items:center;flex:1;">
+                  <div class="bfs-q-empty">// empty</div>
+                </div>
+              </div>
+
+              <div class="code-block" style="margin-top: 16px;">
+                <div class="code-head">
+                  <span class="filename">The algorithm, 15 lines</span>
+                  <button class="copy-btn" data-copy="bfs-algo">Copy</button>
+                </div>
+<pre id="code-bfs-algo" style="font-size: 12px;"><span class="tok-key">static</span> <span class="tok-type">List</span>&lt;<span class="tok-key">string</span>&gt; <span class="tok-fn">Bfs</span>(
+    <span class="tok-key">string</span> start,
+    <span class="tok-type">Dictionary</span>&lt;<span class="tok-key">string</span>, <span class="tok-type">List</span>&lt;<span class="tok-key">string</span>&gt;&gt; graph)
+{
+    <span class="tok-key">var</span> visited = <span class="tok-key">new</span> <span class="tok-type">HashSet</span>&lt;<span class="tok-key">string</span>&gt; { start };
+    <span class="tok-key">var</span> queue   = <span class="tok-key">new</span> <span class="tok-type">Queue</span>&lt;<span class="tok-key">string</span>&gt;();
+    <span class="tok-key">var</span> order   = <span class="tok-key">new</span> <span class="tok-type">List</span>&lt;<span class="tok-key">string</span>&gt;();
+
+    queue.<span class="tok-fn">Enqueue</span>(start);
+
+    <span class="tok-key">while</span> (queue.<span class="tok-fn">TryDequeue</span>(<span class="tok-key">out var</span> node))
+    {
+        order.<span class="tok-fn">Add</span>(node);
+        <span class="tok-key">foreach</span> (<span class="tok-key">var</span> next <span class="tok-key">in</span> graph[node])
+        {
+            <span class="tok-key">if</span> (visited.<span class="tok-fn">Add</span>(next))           <span class="tok-com">// true if NEW</span>
+                queue.<span class="tok-fn">Enqueue</span>(next);
+        }
+    }
+    <span class="tok-key">return</span> order;
+}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout best">
+          <div class="tag">Why this pattern is everywhere</div>
+          <p>
+            Replace &ldquo;graph&rdquo; with any level-ordered exploration and the same skeleton
+            works: directory tree traversal, web crawling, spreading simulations,
+            shortest-path-in-unweighted-graphs, multi-source flood fill, even CSS selector
+            matching on a DOM. A <code class="inline">Queue&lt;T&gt;</code> plus a
+            <code class="inline">HashSet&lt;T&gt;</code> for dedup is one of the most
+            reused pairings in all of computing.
+          </p>
+        </div>
+      </section>
+
+      <!-- ═══ 08 MODERN ═══ -->
+      <section id="modern">
+        <h2><span class="sec-num">08</span>Modern C# 14 idioms</h2>
+        <p>
+          The <code class="inline">Queue&lt;T&gt;</code> API is stable, but the surrounding
+          language keeps tightening what queue-using code looks like.
+        </p>
+
+        <div class="code-block">
+          <div class="code-head">
+            <span class="filename">Modern idioms &middot; C# 14 on .NET 10</span>
+            <button class="copy-btn" data-copy="modern">Copy</button>
+          </div>
+<pre id="code-modern"><span class="tok-com">// ① Collection expressions — insertion order preserved</span>
+<span class="tok-type">Queue</span>&lt;<span class="tok-key">int</span>&gt; q = <span class="tok-key">new</span>([<span class="tok-num">10</span>, <span class="tok-num">20</span>, <span class="tok-num">30</span>]);
+<span class="tok-com">//     10 is at the front, 30 at the back</span>
+
+<span class="tok-com">// ② TryDequeue drain loop — no exceptions, no Count checks</span>
+<span class="tok-key">while</span> (q.<span class="tok-fn">TryDequeue</span>(<span class="tok-key">out var</span> item))
+    <span class="tok-type">Console</span>.<span class="tok-fn">WriteLine</span>(item);       <span class="tok-com">// 10, 20, 30</span>
+
+<span class="tok-com">// ③ Spread into an array — front-to-back order</span>
+<span class="tok-key">var</span> log = <span class="tok-key">new</span> <span class="tok-type">Queue</span>&lt;<span class="tok-key">string</span>&gt;();
+log.<span class="tok-fn">Enqueue</span>(<span class="tok-str">"a"</span>); log.<span class="tok-fn">Enqueue</span>(<span class="tok-str">"b"</span>); log.<span class="tok-fn">Enqueue</span>(<span class="tok-str">"c"</span>);
+<span class="tok-key">string</span>[] snap = [.. log];                <span class="tok-com">// ["a", "b", "c"]</span>
+
+<span class="tok-com">// ④ Bounded fixed-size ring buffer — 10 lines</span>
+<span class="tok-key">public class</span> <span class="tok-type">RingBuffer</span>&lt;T&gt;(<span class="tok-key">int</span> capacity)
+{
+    <span class="tok-key">private readonly</span> <span class="tok-type">Queue</span>&lt;T&gt; _items = <span class="tok-key">new</span>(capacity);
+
+    <span class="tok-key">public void</span> <span class="tok-fn">Add</span>(T item)
+    {
+        <span class="tok-key">if</span> (_items.Count == capacity) _items.<span class="tok-fn">Dequeue</span>();
+        _items.<span class="tok-fn">Enqueue</span>(item);
+    }
+
+    <span class="tok-key">public</span> T[] <span class="tok-fn">Snapshot</span>() =&gt; [.. _items];
+}
+
+<span class="tok-com">// ⑤ PriorityQueue — when "fairness" should mean "most important first"</span>
+<span class="tok-key">var</span> pq = <span class="tok-key">new</span> <span class="tok-type">PriorityQueue</span>&lt;<span class="tok-key">string</span>, <span class="tok-key">int</span>&gt;();
+pq.<span class="tok-fn">Enqueue</span>(<span class="tok-str">"email"</span>,   <span class="tok-num">5</span>);
+pq.<span class="tok-fn">Enqueue</span>(<span class="tok-str">"alert"</span>,   <span class="tok-num">1</span>);   <span class="tok-com">// lower = higher priority</span>
+pq.<span class="tok-fn">Enqueue</span>(<span class="tok-str">"cleanup"</span>, <span class="tok-num">9</span>);
+<span class="tok-type">Console</span>.<span class="tok-fn">WriteLine</span>(pq.<span class="tok-fn">Dequeue</span>());    <span class="tok-com">// "alert"</span></pre>
+        </div>
+
+        <div class="callout perf">
+          <div class="tag">PriorityQueue&lt;TElement, TPriority&gt;</div>
+          <p>
+            If you need &ldquo;most-important-first&rdquo; rather than strict FIFO, reach for
+            <code class="inline api">PriorityQueue&lt;TElement, TPriority&gt;</code>, added
+            in .NET 6 and unchanged since. It&#39;s a binary-heap implementation with
+            <code class="inline">O(log n)</code> enqueue and dequeue &mdash; perfect for
+            scheduled jobs, A* search, and Dijkstra&#39;s algorithm.
+          </p>
+        </div>
+      </section>
+
+      <!-- ═══ 09 PITFALLS ═══ -->
+      <section id="pitfalls">
+        <h2><span class="sec-num">09</span>Pitfalls</h2>
+
+        <div class="callout pitfall">
+          <div class="tag">Pitfall 01 &middot; Dequeue on empty throws</div>
+          <p>
+            <code class="inline">Dequeue()</code> and <code class="inline">Peek()</code> both
+            throw <code class="inline">InvalidOperationException</code> when the queue is
+            empty. <strong>Always prefer <code class="inline">TryDequeue</code> /
+            <code class="inline">TryPeek</code></strong> unless you have an iron-clad
+            invariant that guarantees non-empty.
+          </p>
+        </div>
+
+        <div class="callout pitfall">
+          <div class="tag">Pitfall 02 &middot; Don&#39;t use List as a queue</div>
+          <p>
+            <code class="inline">list.RemoveAt(0)</code> is <code class="inline">O(n)</code>
+            &mdash; it shifts every remaining element left one position. On a list of 10,000
+            items this is devastating in a tight loop. <code class="inline">Queue&lt;T&gt;</code>
+            with its circular buffer is <code class="inline">O(1)</code> for the same
+            operation. If you find yourself calling <code class="inline">RemoveAt(0)</code>,
+            switch to a queue.
+          </p>
+        </div>
+
+        <div class="callout pitfall">
+          <div class="tag">Pitfall 03 &middot; Capacity never shrinks on Dequeue</div>
+          <p>
+            Just like <code class="inline">List&lt;T&gt;</code> and
+            <code class="inline">Stack&lt;T&gt;</code>, the internal array keeps its
+            high-water-mark capacity even after everything is dequeued. Call
+            <code class="inline">TrimExcess()</code> on long-lived queues that have briefly
+            grown large.
+          </p>
+        </div>
+
+        <div class="callout pitfall">
+          <div class="tag">Pitfall 04 &middot; Contains is O(n)</div>
+          <p>
+            If your algorithm has to ask &ldquo;is X already in the queue?&rdquo; repeatedly,
+            maintain a parallel <code class="inline">HashSet&lt;T&gt;</code> for
+            <code class="inline">O(1)</code> membership. This is the textbook BFS pattern
+            &mdash; the visited set is never the queue itself.
+          </p>
+        </div>
+
+        <div class="callout danger">
+          <div class="tag">Not thread-safe</div>
+          <p>
+            <code class="inline">Queue&lt;T&gt;</code> is <strong>not safe</strong> for
+            concurrent access. For producer &ndash; consumer pipelines reach for
+            <code class="inline api">ConcurrentQueue&lt;T&gt;</code> from
+            <code class="inline">System.Collections.Concurrent</code> &mdash; lock-free
+            <code class="inline">Enqueue</code>, <code class="inline">TryDequeue</code>,
+            <code class="inline">TryPeek</code>. Or for blocking semantics (consumers wait
+            for producers),
+            <code class="inline api">System.Threading.Channels.Channel&lt;T&gt;</code>.
+          </p>
+        </div>
+      </section>
+
+      <!-- ─── NEXT MODULE ─── -->
+      <a href="dictionary.html" class="next-module">
+        <div>
+          <div class="label">Next module &middot; 05</div>
+          <h3>Dictionary<span class="gn">&lt;TKey, TValue&gt;</span></h3>
+          <p>Hash table &mdash; the cornerstone of fast lookup. Keyed access in expected O(1), at the cost of unpredictable iteration order.</p>
+        </div>
+        <span class="arrow">&rarr;</span>
+      </a>
+
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-inner">
+      <span>C# DATA STRUCTURES &middot; MODULE 04</span>
+      <span class="v">REV. 2026.04 &middot; .NET 10 &middot; C# 14</span>
+      <span><a href="index.html">&larr; BACK TO LIBRARY</a></span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  /* ─── Tabs ────────────────────────────────────── */
+  document.getElementById('ops-tabs').addEventListener('click', e => {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    const id = btn.dataset.tab;
+    document.querySelectorAll('#ops-tabs .tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === id));
+  });
+
+  /* ─── Copy buttons ────────────────────────────── */
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const el = document.getElementById('code-' + btn.dataset.copy);
+      if (!el) return;
+      navigator.clipboard.writeText(el.innerText).then(() => {
+        btn.textContent = 'Copied';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1400);
+      });
+    });
+  });
+
+  /* ─── TOC scroll-spy ──────────────────────────── */
+  const tocLinks = document.querySelectorAll('aside.toc a');
+  const sections = Array.from(document.querySelectorAll('section[id]'));
+  function updateToc() {
+    const y = window.scrollY + 120;
+    let currentId = sections[0]?.id;
+    for (const s of sections) if (s.offsetTop <= y) currentId = s.id;
+    tocLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + currentId));
+  }
+  window.addEventListener('scroll', updateToc, { passive: true });
+  updateToc();
+
+  /* ═══════════════════════════════════════════════
+     QUEUE PLAYGROUND  (horizontal conveyor belt)
+     ═══════════════════════════════════════════════ */
+  const Q = {
+    items: [],      // [{ id, value }], index 0 = FRONT
+    nextId: 1,
+    animating: false,
+    enq: 0, deq: 0,
+    opCount: 0,
+  };
+
+  const beltEl     = document.getElementById('belt-items');
+  const countEl    = document.getElementById('pg-count');
+  const frontEl    = document.getElementById('pg-front');
+  const backEl     = document.getElementById('pg-back');
+  const enqEl      = document.getElementById('pg-enq');
+  const deqEl      = document.getElementById('pg-deq');
+  const logEl      = document.getElementById('pg-log');
+
+  function renderBelt() {
+    beltEl.querySelectorAll('.belt-item, .belt-empty').forEach(n => n.remove());
+    if (Q.items.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'belt-empty';
+      empty.textContent = '// empty queue — Enqueue to start the belt';
+      beltEl.appendChild(empty);
+    } else {
+      Q.items.forEach((item, i) => {
+        const el = document.createElement('div');
+        el.className = 'belt-item';
+        if (i === 0) el.classList.add('is-front');
+        if (i === Q.items.length - 1) el.classList.add('is-back');
+        el.dataset.id = item.id;
+        el.dataset.idx = `[${i}]`;
+        el.textContent = item.value;
+        beltEl.appendChild(el);
+      });
+    }
+    countEl.textContent = Q.items.length;
+    frontEl.textContent = Q.items[0]?.value ?? 'null';
+    backEl.textContent  = Q.items[Q.items.length - 1]?.value ?? 'null';
+    enqEl.textContent   = Q.enq;
+    deqEl.textContent   = Q.deq;
+  }
+
+  function log(op, msg, cls = '') {
+    Q.opCount++;
+    const line = document.createElement('div');
+    line.className = 'pg-log-line ' + cls;
+    line.innerHTML = `<span class="time">[op ${String(Q.opCount).padStart(3, '0')}]</span><span class="op">${op}</span> &mdash; ${msg}`;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+    while (logEl.children.length > 40) logEl.removeChild(logEl.firstChild);
+  }
+
+  function readEnqVal() {
+    const v = document.getElementById('enq-val').value.trim();
+    if (!v) return null;
+    return isNaN(Number(v)) ? v : Number(v);
+  }
+
+  window.queueEnqueue = () => {
+    if (Q.animating) return;
+    const v = readEnqVal();
+    if (v === null) return log('ERROR', 'enter a value first', 'error');
+    if (Q.items.length >= 10) return log('ERROR', 'visual cap: max 10 items — dequeue or clear first', 'error');
+    Q.items.push({ id: Q.nextId++, value: v });
+    Q.enq++;
+    renderBelt();
+    log('Enqueue', `queue.Enqueue(${JSON.stringify(v)}) — O(1), appended to back`, 'enqueue');
+  };
+
+  window.queueDequeue = () => {
+    if (Q.animating) return;
+    if (Q.items.length === 0) return log('ERROR', 'queue.Dequeue() on empty — would throw InvalidOperationException', 'error');
+
+    const first = Q.items[0];
+    const el = beltEl.querySelector(`.belt-item[data-id="${first.id}"]`);
+    if (el) el.classList.add('dequeuing');
+    Q.animating = true;
+
+    setTimeout(() => {
+      Q.items.shift();
+      Q.deq++;
+      Q.animating = false;
+      renderBelt();
+      log('Dequeue', `returned ${JSON.stringify(first.value)} — O(1), new front: ${Q.items[0]?.value ?? 'null'}`, 'dequeue');
+    }, 480);
+  };
+
+  window.queuePeek = () => {
+    if (Q.animating) return;
+    if (Q.items.length === 0) return log('ERROR', 'queue.Peek() on empty — would throw InvalidOperationException', 'error');
+    const first = Q.items[0];
+    const el = beltEl.querySelector(`.belt-item[data-id="${first.id}"]`);
+    if (el) {
+      el.classList.add('peeking');
+      setTimeout(() => el.classList.remove('peeking'), 900);
+    }
+    log('Peek', `returned ${JSON.stringify(first.value)} — O(1), queue unchanged`, 'peek');
+  };
+
+  window.queueEnqueueRandom = () => {
+    if (Q.animating) return;
+    const v = Math.floor(Math.random() * 90) + 10;
+    document.getElementById('enq-val').value = v;
+    queueEnqueue();
+  };
+
+  window.queueEnqueueMany = async (n) => {
+    if (Q.animating) return;
+    for (let i = 0; i < n; i++) {
+      const v = Math.floor(Math.random() * 90) + 10;
+      document.getElementById('enq-val').value = v;
+      queueEnqueue();
+      await sleep(220);
+    }
+  };
+
+  window.queueClear = () => {
+    if (Q.animating) return;
+    if (Q.items.length === 0) return log('Clear', 'already empty');
+    Q.items = [];
+    renderBelt();
+    log('Clear', 'queue.Clear() — O(n) — references released');
+  };
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  // Seed with a few items
+  Q.items = [
+    { id: Q.nextId++, value: 42 },
+    { id: Q.nextId++, value: 17 },
+    { id: Q.nextId++, value: 93 },
+  ];
+  Q.enq = 3;
+  renderBelt();
+
+  /* ═══════════════════════════════════════════════
+     BFS GRAPH TRAVERSAL
+     ═══════════════════════════════════════════════ */
+  const GRAPH = {
+    A: ['B', 'C'],
+    B: ['A', 'D', 'E'],
+    C: ['A', 'F', 'G'],
+    D: ['B'],
+    E: ['B', 'F'],
+    F: ['C', 'E'],
+    G: ['C'],
+  };
+
+  const BFS = {
+    start: 'A',
+    queue: [],         // [{ id, node }]
+    visited: new Set(),
+    order: [],
+    current: null,
+    nextId: 1,
+    running: false,
+    finished: false,
+  };
+
+  const bfsGraphEl  = document.getElementById('bfs-graph');
+  const bfsQueueEl  = document.getElementById('bfs-queue-items');
+  const bfsStatusEl = document.getElementById('bfs-status');
+  const bfsStatusText = document.getElementById('bfs-status-text');
+  const bfsVisitedEl = document.getElementById('bfs-visited-list');
+  const bfsRunBtn   = document.getElementById('bfs-run');
+  const bfsStepBtn  = document.getElementById('bfs-step');
+
+  // Node click handler — start BFS from clicked node
+  bfsGraphEl.querySelectorAll('.bfs-node').forEach(g => {
+    g.addEventListener('click', () => {
+      if (BFS.running) return;
+      startBFS(g.dataset.id);
+    });
+  });
+
+  function renderGraphState() {
+    bfsGraphEl.querySelectorAll('.bfs-node').forEach(g => {
+      const id = g.dataset.id;
+      g.classList.remove('queued', 'current', 'visited', 'start');
+      if (id === BFS.start) g.classList.add('start');
+      if (BFS.current === id) g.classList.add('current');
+      else if (BFS.visited.has(id) && !BFS.queue.find(q => q.node === id)) g.classList.add('visited');
+      else if (BFS.queue.find(q => q.node === id)) g.classList.add('queued');
+    });
+    // Edges: highlight ones touching current
+    bfsGraphEl.querySelectorAll('.bfs-edge').forEach(e => {
+      e.classList.remove('active');
+      const [a, b] = e.dataset.edge.split('-');
+      if (BFS.current && (a === BFS.current || b === BFS.current)) e.classList.add('active');
+    });
+  }
+
+  function renderBfsQueue(dequeuingId = null) {
+    bfsQueueEl.querySelectorAll('.bfs-q-item, .bfs-q-empty').forEach(n => n.remove());
+    if (BFS.queue.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'bfs-q-empty';
+      empty.textContent = '// empty';
+      bfsQueueEl.appendChild(empty);
+      return;
+    }
+    BFS.queue.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'bfs-q-item' + (item.id === dequeuingId ? ' dequeuing' : '');
+      el.dataset.id = item.id;
+      el.textContent = item.node;
+      bfsQueueEl.appendChild(el);
+    });
+  }
+
+  function renderVisitedOrder() {
+    if (BFS.order.length === 0) {
+      bfsVisitedEl.innerHTML = '<span style="color:var(--text-3);font-style:italic;">(none yet)</span>';
+    } else {
+      bfsVisitedEl.innerHTML = BFS.order.map(n => `<span class="vnode">${n}</span>`).join('');
+    }
+  }
+
+  function setStatus(text, cls = '') {
+    bfsStatusEl.classList.remove('running', 'done');
+    if (cls) bfsStatusEl.classList.add(cls);
+    bfsStatusText.innerHTML = text;
+  }
+
+  window.startBFS = (node) => {
+    if (BFS.running) return;
+    BFS.start = node;
+    BFS.queue = [];
+    BFS.visited = new Set([node]);
+    BFS.order = [];
+    BFS.current = null;
+    BFS.finished = false;
+    BFS.queue.push({ id: BFS.nextId++, node });
+    renderGraphState();
+    renderBfsQueue();
+    renderVisitedOrder();
+    setStatus(`Initialised BFS from <strong style="color:var(--text)">${node}</strong>. Queue seeded. Press <strong style="color:var(--text)">Run</strong> or <strong style="color:var(--text)">Step</strong>.`);
+  };
+
+  window.stepBFS = async () => {
+    if (BFS.running) return;
+    if (BFS.finished) return setStatus(`BFS complete. Visited ${BFS.order.length} node(s): <strong style="color:var(--emerald)">${BFS.order.join(' → ')}</strong>`, 'done');
+    if (BFS.queue.length === 0) {
+      BFS.finished = true;
+      setStatus(`BFS complete. Visited ${BFS.order.length} node(s): <strong style="color:var(--emerald)">${BFS.order.join(' → ')}</strong>`, 'done');
+      renderGraphState();
+      return;
+    }
+
+    BFS.running = true;
+    bfsRunBtn.disabled = bfsStepBtn.disabled = true;
+
+    // Dequeue head
+    const head = BFS.queue[0];
+    renderBfsQueue(head.id);
+    await sleep(420);
+    BFS.queue.shift();
+    BFS.current = head.node;
+    renderGraphState();
+    renderBfsQueue();
+    setStatus(`Dequeued <strong style="color:var(--text)">${head.node}</strong>. Examining neighbours…`, 'running');
+    await sleep(450);
+
+    // Process neighbours
+    BFS.order.push(head.node);
+    renderVisitedOrder();
+    const neighbours = GRAPH[head.node] ?? [];
+    let added = [];
+    for (const nb of neighbours) {
+      if (!BFS.visited.has(nb)) {
+        BFS.visited.add(nb);
+        BFS.queue.push({ id: BFS.nextId++, node: nb });
+        added.push(nb);
+        renderBfsQueue();
+        renderGraphState();
+        await sleep(280);
+      }
+    }
+
+    BFS.current = null;
+    renderGraphState();
+    if (added.length) {
+      setStatus(`Processed <strong style="color:var(--text)">${head.node}</strong>, enqueued ${added.length} new neighbour(s): <strong style="color:var(--cyan)">${added.join(', ')}</strong>`, 'running');
+    } else {
+      setStatus(`Processed <strong style="color:var(--text)">${head.node}</strong> — no unvisited neighbours.`, 'running');
+    }
+
+    if (BFS.queue.length === 0) {
+      BFS.finished = true;
+      setStatus(`BFS complete. Visited ${BFS.order.length} node(s): <strong style="color:var(--emerald)">${BFS.order.join(' → ')}</strong>`, 'done');
+    }
+
+    BFS.running = false;
+    bfsRunBtn.disabled = bfsStepBtn.disabled = false;
+  };
+
+  window.runBFS = async () => {
+    if (BFS.running) return;
+    if (BFS.finished) startBFS(BFS.start);
+    while (!BFS.finished && BFS.queue.length > 0) {
+      await stepBFS();
+      await sleep(200);
+    }
+  };
+
+  window.resetBFS = () => {
+    if (BFS.running) return;
+    startBFS(BFS.start);
+  };
+
+  // Initial state
+  startBFS('A');
+</script>
+
+</body>
+</html>
