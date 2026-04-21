@@ -3,17 +3,16 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>csref — C# Data Structures Reference</title>
+<title>cs.blueprint — C# Data Structures Reference</title>
 <meta name="description" content="A clean, topic-first reference for C# data structures in .NET 10 / C# 14. Inspired by Microsoft Learn." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&family=IBM+Plex+Serif:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
 <style>
-/* ─────────────────────────────────────────────────────────────
+/* ═════════════════════════════════════════════════════════════
    Design tokens
-   ───────────────────────────────────────────────────────────── */
+   ═════════════════════════════════════════════════════════════ */
 :root {
-  /* Brand — indigo */
   --indigo-500: #4F46E5;
   --indigo-600: #3730A3;
   --indigo-400: #6366F1;
@@ -22,7 +21,6 @@
   --indigo-bg-2:#F0F4FF;
   --indigo-bg-3:#F5F3FF;
 
-  /* Namespace accents */
   --ns-primitive:    #4F46E5;
   --ns-primitive-bg: #EEF2FF;
   --ns-generic:      #6366F1;
@@ -34,7 +32,6 @@
   --ns-immutable:    #D97706;
   --ns-immutable-bg: #FFF7ED;
 
-  /* Neutrals */
   --fg:          #111827;
   --fg-muted:    #6B7280;
   --fg-subtle:   #9CA3AF;
@@ -42,8 +39,8 @@
   --bg-soft:     #FAFAFA;
   --border:      #E5E7EB;
   --border-soft: #F3F4F6;
+  --scrim:       rgba(17, 24, 39, 0.40);
 
-  /* Code surface */
   --code-bg:   #1E1B4B;
   --code-fg:   #E0E7FF;
   --code-kw:   #818CF8;
@@ -52,15 +49,16 @@
   --code-cmt:  #6B7280;
   --code-num:  #F9A8D4;
 
-  /* Radii */
   --r-sm: 4px;
   --r-md: 8px;
   --r-lg: 12px;
 
-  /* Type */
   --sans:  "IBM Plex Sans", system-ui, sans-serif;
   --mono:  "IBM Plex Mono", ui-monospace, Menlo, monospace;
   --serif: "IBM Plex Serif", Georgia, serif;
+
+  --sb-w: 220px;
+  --topbar-h: 52px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -72,6 +70,7 @@
     --bg-soft:     #111119;
     --border:      #1F2028;
     --border-soft: #171822;
+    --scrim:       rgba(0, 0, 0, 0.60);
 
     --indigo-bg:   #1E1B4B;
     --indigo-bg-2: #1B1A3A;
@@ -87,9 +86,9 @@
   }
 }
 
-/* ─────────────────────────────────────────────────────────────
+/* ═════════════════════════════════════════════════════════════
    Reset
-   ───────────────────────────────────────────────────────────── */
+   ═════════════════════════════════════════════════════════════ */
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body {
@@ -103,39 +102,94 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 a { color: inherit; text-decoration: none; }
+button { font-family: inherit; border: 0; background: none; padding: 0; cursor: pointer; color: inherit; }
 
-/* ─────────────────────────────────────────────────────────────
-   Layout
-   ───────────────────────────────────────────────────────────── */
+/* ═════════════════════════════════════════════════════════════
+   Topbar — mobile/tablet only
+   ═════════════════════════════════════════════════════════════ */
+.topbar {
+  display: none;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  height: var(--topbar-h);
+  padding: 0 16px;
+  background: var(--bg);
+  border-bottom: 0.5px solid var(--border);
+  align-items: center;
+  gap: 12px;
+}
+.topbar .brand-mini {
+  display: flex; align-items: center; gap: 10px;
+}
+.topbar .brand-mini .mono {
+  width: 26px; height: 26px;
+  display: grid; place-items: center;
+  font-family: var(--mono);
+  font-size: 13px; font-weight: 500;
+  color: var(--indigo-500);
+  background: var(--indigo-bg);
+  border-radius: var(--r-sm);
+  letter-spacing: -0.02em;
+}
+.topbar .brand-mini .name {
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+.menu-btn {
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  border-radius: var(--r-sm);
+  color: var(--fg-muted);
+  transition: background 120ms, color 120ms;
+}
+.menu-btn:hover { background: var(--bg-soft); color: var(--fg); }
+.menu-btn svg { width: 18px; height: 18px; display: block; }
+
+/* Scrim */
+.scrim {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--scrim);
+  z-index: 20;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+.scrim.show { opacity: 1; }
+
+/* ═════════════════════════════════════════════════════════════
+   Layout shell
+   ═════════════════════════════════════════════════════════════ */
 .app {
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: var(--sb-w) 1fr;
   min-height: 100vh;
 }
 
-/* Sidebar */
+/* Sidebar — fixed on desktop, off-canvas drawer on mobile */
 .sidebar {
   position: fixed;
   top: 0; left: 0; bottom: 0;
-  width: 220px;
+  width: var(--sb-w);
   border-right: 0.5px solid var(--border);
   background: var(--bg);
   overflow-y: auto;
   padding: 20px 0 72px;
-  z-index: 10;
+  z-index: 25;
+  transition: transform 220ms cubic-bezier(.22, .61, .36, 1);
 }
 .brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display: flex; align-items: center; gap: 10px;
   padding: 0 20px 20px;
 }
 .brand .mono {
-  width: 26px; height: 26px;
+  width: 28px; height: 28px;
   display: grid; place-items: center;
   font-family: var(--mono);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 13px; font-weight: 500;
   color: var(--indigo-500);
   background: var(--indigo-bg);
   border-radius: var(--r-sm);
@@ -147,12 +201,23 @@ a { color: inherit; text-decoration: none; }
   font-size: 20px;
   letter-spacing: -0.02em;
 }
+.sidebar .close-btn {
+  display: none;
+  position: absolute;
+  top: 18px; right: 14px;
+  width: 30px; height: 30px;
+  display: none;
+  place-items: center;
+  border-radius: var(--r-sm);
+  color: var(--fg-muted);
+}
+.sidebar .close-btn:hover { background: var(--bg-soft); color: var(--fg); }
+.sidebar .close-btn svg { width: 16px; height: 16px; }
 
 .nav-group { padding: 0 12px; margin-top: 18px; }
 .nav-label {
   font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 400;
+  font-size: 10px; font-weight: 400;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--fg-subtle);
@@ -212,9 +277,9 @@ a { color: inherit; text-decoration: none; }
 }
 .content { width: 100%; max-width: 760px; }
 
-/* ─────────────────────────────────────────────────────────────
+/* ═════════════════════════════════════════════════════════════
    Hero
-   ───────────────────────────────────────────────────────────── */
+   ═════════════════════════════════════════════════════════════ */
 .hero { margin-bottom: 28px; }
 .badges {
   display: flex; flex-wrap: wrap; gap: 6px;
@@ -222,8 +287,7 @@ a { color: inherit; text-decoration: none; }
 }
 .badge {
   font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 400;
+  font-size: 10px; font-weight: 400;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 3px 8px;
@@ -257,9 +321,9 @@ a { color: inherit; text-decoration: none; }
   max-width: 62ch;
 }
 
-/* ─────────────────────────────────────────────────────────────
+/* ═════════════════════════════════════════════════════════════
    Metric tiles
-   ───────────────────────────────────────────────────────────── */
+   ═════════════════════════════════════════════════════════════ */
 .metrics {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -294,9 +358,9 @@ a { color: inherit; text-decoration: none; }
   margin-top: 2px;
 }
 
-/* ─────────────────────────────────────────────────────────────
+/* ═════════════════════════════════════════════════════════════
    Sections
-   ───────────────────────────────────────────────────────────── */
+   ═════════════════════════════════════════════════════════════ */
 section { margin-bottom: 32px; }
 h2.section-title {
   font-family: var(--sans);
@@ -342,11 +406,13 @@ pre { margin: 0; }
   border: 0.5px solid var(--border);
   border-radius: var(--r-lg);
   overflow: hidden;
+  overflow-x: auto;
 }
 table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+  min-width: 480px;
 }
 thead th {
   text-align: left;
@@ -359,6 +425,7 @@ thead th {
   padding: 10px 14px;
   background: var(--bg-soft);
   border-bottom: 0.5px solid var(--border);
+  white-space: nowrap;
 }
 tbody td {
   padding: 10px 14px;
@@ -370,6 +437,7 @@ td.mono, th.mono {
   font-family: var(--mono);
   font-size: 12px;
   color: var(--fg);
+  white-space: nowrap;
 }
 td.desc {
   font-family: var(--sans);
@@ -391,34 +459,79 @@ td.desc {
 }
 .chip:hover { color: var(--indigo-500); border-color: var(--indigo-300); }
 
-/* ─────────────────────────────────────────────────────────────
+/* ═════════════════════════════════════════════════════════════
    Responsive
-   ───────────────────────────────────────────────────────────── */
-@media (max-width: 860px) {
+   ═════════════════════════════════════════════════════════════ */
+/* Tablet landscape and below: narrower padding */
+@media (max-width: 1100px) {
+  .main { padding: 48px 36px 80px; }
+}
+
+/* Tablet portrait and below: drawer mode */
+@media (max-width: 900px) {
   .app { grid-template-columns: 1fr; }
+  .main { grid-column: 1; padding: 24px 22px 60px; }
+
+  .topbar { display: flex; }
+
   .sidebar {
-    position: static;
-    width: 100%;
-    height: auto;
-    border-right: 0;
-    border-bottom: 0.5px solid var(--border);
-    padding-bottom: 20px;
+    transform: translateX(-100%);
+    box-shadow: 0 0 0 transparent;
+    width: min(84vw, 280px);
   }
-  .side-footer { position: static; margin-top: 16px; padding: 0 20px; }
-  .main { grid-column: 1; padding: 28px 20px 60px; }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  .sidebar .close-btn { display: grid; }
+  .scrim.show { display: block; }
+
+  .side-footer {
+    position: static;
+    margin-top: 20px;
+    padding: 0 20px;
+  }
+}
+
+/* Small phone: single-column metrics, tighter spacing */
+@media (max-width: 560px) {
   .metrics { grid-template-columns: 1fr; }
+  .display { font-size: 24px; }
+  .main { padding: 20px 16px 48px; }
+  .code { padding: 14px; font-size: 12px; }
 }
 </style>
 </head>
 <body>
 
+<!-- ─────────────── Top bar (mobile/tablet only) ─────────────── -->
+<header class="topbar" role="banner">
+  <button class="menu-btn" id="menuOpen" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+      <path d="M4 7h16M4 12h16M4 17h16"/>
+    </svg>
+  </button>
+  <div class="brand-mini">
+    <div class="mono">C#</div>
+    <div class="name">cs.blueprint</div>
+  </div>
+</header>
+
+<!-- Scrim for drawer -->
+<div class="scrim" id="scrim" aria-hidden="true"></div>
+
 <div class="app">
 
   <!-- ─────────────── Sidebar ─────────────── -->
-  <aside class="sidebar" aria-label="Primary">
+  <aside class="sidebar" id="sidebar" aria-label="Primary">
+    <button class="close-btn" id="menuClose" aria-label="Close navigation">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M6 6l12 12M18 6L6 18"/>
+      </svg>
+    </button>
+
     <div class="brand">
       <div class="mono">C#</div>
-      <div class="name">csharp-reference</div>
+      <div class="name">cs.blueprint</div>
     </div>
 
     <div class="nav-group">
@@ -426,62 +539,62 @@ td.desc {
       <ul class="nav-list">
         <li class="nav-item"><a href="docs/arrays.html">Array</a></li>
         <li class="nav-item"><a href="docs/span.html">Span&lt;T&gt;</a></li>
-        <li class="nav-item"><a href="memory.html">Memory&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="docs/memory.html">Memory&lt;T&gt;</a></li>
       </ul>
     </div>
 
     <div class="nav-group">
       <div class="nav-label"><span class="dot generic"></span>System.Collections.Generic</div>
       <ul class="nav-list">
-        <li class="nav-item"><a href="list.html">List&lt;T&gt;</a></li>
-        <li class="nav-item"><a href="linkedlist.html">LinkedList&lt;T&gt;</a></li>
-        <li class="nav-item"><a href="stack.html">Stack&lt;T&gt;</a></li>
-        <li class="nav-item"><a href="queue.html">Queue&lt;T&gt;</a></li>
-        <li class="nav-item"><a href="priority-queue.html">PriorityQueue&lt;T,P&gt;</a></li>
+        <li class="nav-item"><a href="docs/list.html">List&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="docs/linkedlist.html">LinkedList&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="docs/stack.html">Stack&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="docs/queue.html">Queue&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="docs/priority-queue.html">PriorityQueue&lt;T,P&gt;</a></li>
         <li class="nav-item active"><a href="index.html">Dictionary&lt;K,V&gt;</a></li>
-        <li class="nav-item"><a href="sorted-dictionary.html">SortedDictionary&lt;K,V&gt;</a></li>
-        <li class="nav-item"><a href="sorted-list.html">SortedList&lt;K,V&gt;</a></li>
-        <li class="nav-item"><a href="hashset.html">HashSet&lt;T&gt;</a></li>
-        <li class="nav-item"><a href="sorted-set.html">SortedSet&lt;T&gt;</a></li>
-        <li class="nav-item"><a href="observable-collection.html">ObservableCollection&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="docs/sorted-dictionary.html">SortedDictionary&lt;K,V&gt;</a></li>
+        <li class="nav-item"><a href="docs/sorted-list.html">SortedList&lt;K,V&gt;</a></li>
+        <li class="nav-item"><a href="docs/hashset.html">HashSet&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="docs/sorted-set.html">SortedSet&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="docs/observable-collection.html">ObservableCollection&lt;T&gt;</a></li>
       </ul>
     </div>
 
     <div class="nav-group">
       <div class="nav-label"><span class="dot legacy"></span>System.Collections (legacy)</div>
       <ul class="nav-list">
-        <li class="nav-item"><a href="arraylist.html">ArrayList</a></li>
-        <li class="nav-item"><a href="hashtable.html">Hashtable</a></li>
-        <li class="nav-item"><a href="legacy-stack.html">Stack</a></li>
-        <li class="nav-item"><a href="legacy-queue.html">Queue</a></li>
-        <li class="nav-item"><a href="legacy-sorted-list.html">SortedList</a></li>
-        <li class="nav-item"><a href="bitarray.html">BitArray</a></li>
-        <li class="nav-item"><a href="string-collection.html">StringCollection</a></li>
+        <li class="nav-item"><a href="docs/arraylist.html">ArrayList</a></li>
+        <li class="nav-item"><a href="docs/hashtable.html">Hashtable</a></li>
+        <li class="nav-item"><a href="docs/legacy-stack.html">Stack</a></li>
+        <li class="nav-item"><a href="docs/legacy-queue.html">Queue</a></li>
+        <li class="nav-item"><a href="docs/legacy-sorted-list.html">SortedList</a></li>
+        <li class="nav-item"><a href="docs/bitarray.html">BitArray</a></li>
+        <li class="nav-item"><a href="docs/string-collection.html">StringCollection</a></li>
       </ul>
     </div>
 
     <div class="nav-group">
       <div class="nav-label"><span class="dot concurrent"></span>System.Collections.Concurrent</div>
       <ul class="nav-list">
-        <li class="nav-item"><a href="concurrent-dictionary.html">ConcurrentDictionary</a></li>
-        <li class="nav-item"><a href="concurrent-queue.html">ConcurrentQueue&lt;T&gt;</a></li>
-        <li class="nav-item"><a href="concurrent-stack.html">ConcurrentStack&lt;T&gt;</a></li>
-        <li class="nav-item"><a href="concurrent-bag.html">ConcurrentBag&lt;T&gt;</a></li>
-        <li class="nav-item"><a href="blocking-collection.html">BlockingCollection&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="docs/concurrent-dictionary.html">ConcurrentDictionary</a></li>
+        <li class="nav-item"><a href="docs/concurrent-queue.html">ConcurrentQueue&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="docs/concurrent-stack.html">ConcurrentStack&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="docs/concurrent-bag.html">ConcurrentBag&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="docs/blocking-collection.html">BlockingCollection&lt;T&gt;</a></li>
       </ul>
     </div>
 
     <div class="nav-group">
       <div class="nav-label"><span class="dot immutable"></span>System.Collections.Immutable</div>
       <ul class="nav-list">
-        <li class="nav-item"><a href="immutable-array.html">ImmutableArray&lt;T&gt;</a></li>
-        <li class="nav-item"><a href="immutable-list.html">ImmutableList&lt;T&gt;</a></li>
-        <li class="nav-item"><a href="immutable-dictionary.html">ImmutableDictionary</a></li>
-        <li class="nav-item"><a href="immutable-sorted-dictionary.html">ImmutableSortedDictionary</a></li>
-        <li class="nav-item"><a href="immutable-hashset.html">ImmutableHashSet&lt;T&gt;</a></li>
-        <li class="nav-item"><a href="immutable-sorted-set.html">ImmutableSortedSet&lt;T&gt;</a></li>
-        <li class="nav-item"><a href="immutable-queue.html">ImmutableQueue&lt;T&gt;</a></li>
-        <li class="nav-item"><a href="immutable-stack.html">ImmutableStack&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="docs/immutable-array.html">ImmutableArray&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="docs/immutable-list.html">ImmutableList&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="docs/immutable-dictionary.html">ImmutableDictionary</a></li>
+        <li class="nav-item"><a href="docs/immutable-sorted-dictionary.html">ImmutableSortedDictionary</a></li>
+        <li class="nav-item"><a href="docs/immutable-hashset.html">ImmutableHashSet&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="docs/immutable-sorted-set.html">ImmutableSortedSet&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="docs/immutable-queue.html">ImmutableQueue&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="docs/immutable-stack.html">ImmutableStack&lt;T&gt;</a></li>
       </ul>
     </div>
 
@@ -605,41 +718,13 @@ users[<span class="num">4</span>] = <span class="str">"Daniel"</span>;</pre></di
               <tr><th>Method</th><th>Signature</th><th>Complexity</th></tr>
             </thead>
             <tbody>
-              <tr>
-                <td class="mono">Add</td>
-                <td class="mono">Add(TKey, TValue)</td>
-                <td class="mono">O(1) avg</td>
-              </tr>
-              <tr>
-                <td class="mono">TryAdd</td>
-                <td class="mono">TryAdd(TKey, TValue) → bool</td>
-                <td class="mono">O(1) avg</td>
-              </tr>
-              <tr>
-                <td class="mono">Remove</td>
-                <td class="mono">Remove(TKey) → bool</td>
-                <td class="mono">O(1) avg</td>
-              </tr>
-              <tr>
-                <td class="mono">ContainsKey</td>
-                <td class="mono">ContainsKey(TKey) → bool</td>
-                <td class="mono">O(1) avg</td>
-              </tr>
-              <tr>
-                <td class="mono">TryGetValue</td>
-                <td class="mono">TryGetValue(TKey, out TValue) → bool</td>
-                <td class="mono">O(1) avg</td>
-              </tr>
-              <tr>
-                <td class="mono">Clear</td>
-                <td class="mono">Clear()</td>
-                <td class="mono">O(n)</td>
-              </tr>
-              <tr>
-                <td class="mono">EnsureCapacity</td>
-                <td class="mono">EnsureCapacity(int) → int</td>
-                <td class="mono">O(n)</td>
-              </tr>
+              <tr><td class="mono">Add</td><td class="mono">Add(TKey, TValue)</td><td class="mono">O(1) avg</td></tr>
+              <tr><td class="mono">TryAdd</td><td class="mono">TryAdd(TKey, TValue) → bool</td><td class="mono">O(1) avg</td></tr>
+              <tr><td class="mono">Remove</td><td class="mono">Remove(TKey) → bool</td><td class="mono">O(1) avg</td></tr>
+              <tr><td class="mono">ContainsKey</td><td class="mono">ContainsKey(TKey) → bool</td><td class="mono">O(1) avg</td></tr>
+              <tr><td class="mono">TryGetValue</td><td class="mono">TryGetValue(TKey, out TValue) → bool</td><td class="mono">O(1) avg</td></tr>
+              <tr><td class="mono">Clear</td><td class="mono">Clear()</td><td class="mono">O(n)</td></tr>
+              <tr><td class="mono">EnsureCapacity</td><td class="mono">EnsureCapacity(int) → int</td><td class="mono">O(n)</td></tr>
             </tbody>
           </table>
         </div>
@@ -649,18 +734,52 @@ users[<span class="num">4</span>] = <span class="str">"Daniel"</span>;</pre></di
       <section>
         <h2 class="section-title">Related structures</h2>
         <div class="chips">
-          <a class="chip" href="sorted-dictionary.html">SortedDictionary&lt;K,V&gt;</a>
-          <a class="chip" href="sorted-list.html">SortedList&lt;K,V&gt;</a>
-          <a class="chip" href="hashset.html">HashSet&lt;T&gt;</a>
-          <a class="chip" href="concurrent-dictionary.html">ConcurrentDictionary</a>
-          <a class="chip" href="immutable-dictionary.html">ImmutableDictionary</a>
-          <a class="chip" href="hashtable.html">Hashtable</a>
+          <a class="chip" href="docs/sorted-dictionary.html">SortedDictionary&lt;K,V&gt;</a>
+          <a class="chip" href="docs/sorted-list.html">SortedList&lt;K,V&gt;</a>
+          <a class="chip" href="docs/hashset.html">HashSet&lt;T&gt;</a>
+          <a class="chip" href="docs/concurrent-dictionary.html">ConcurrentDictionary</a>
+          <a class="chip" href="docs/immutable-dictionary.html">ImmutableDictionary</a>
+          <a class="chip" href="docs/hashtable.html">Hashtable</a>
         </div>
       </section>
 
     </article>
   </main>
 </div>
+
+<script>
+(function () {
+  const sb     = document.getElementById('sidebar');
+  const scrim  = document.getElementById('scrim');
+  const openB  = document.getElementById('menuOpen');
+  const closeB = document.getElementById('menuClose');
+
+  function open()  {
+    sb.classList.add('open');
+    scrim.classList.add('show');
+    openB.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    sb.classList.remove('open');
+    scrim.classList.remove('show');
+    openB.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  }
+
+  openB.addEventListener('click', open);
+  closeB.addEventListener('click', close);
+  scrim.addEventListener('click', close);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+
+  // Close drawer when a nav link is tapped (mobile)
+  sb.querySelectorAll('.nav-item a').forEach(a => {
+    a.addEventListener('click', () => {
+      if (window.matchMedia('(max-width: 900px)').matches) close();
+    });
+  });
+})();
+</script>
 
 </body>
 </html>

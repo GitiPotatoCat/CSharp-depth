@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Array — csref</title>
+<title>Array — cs.blueprint</title>
 <meta name="description" content="System.Array — fixed-size, zero-indexed, strongly typed collection. Reference for .NET 10 / C# 14." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&family=IBM+Plex+Serif:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
 <style>
-/* ─────────────────────────────────────────────────────────────
+/* ═════════════════════════════════════════════════════════════
    Design tokens
-   ───────────────────────────────────────────────────────────── */
+   ═════════════════════════════════════════════════════════════ */
 :root {
   --indigo-500: #4F46E5;
   --indigo-600: #3730A3;
@@ -39,6 +39,7 @@
   --bg-soft:     #FAFAFA;
   --border:      #E5E7EB;
   --border-soft: #F3F4F6;
+  --scrim:       rgba(17, 24, 39, 0.40);
 
   --code-bg:   #1E1B4B;
   --code-fg:   #E0E7FF;
@@ -55,6 +56,9 @@
   --sans:  "IBM Plex Sans", system-ui, sans-serif;
   --mono:  "IBM Plex Mono", ui-monospace, Menlo, monospace;
   --serif: "IBM Plex Serif", Georgia, serif;
+
+  --sb-w: 220px;
+  --topbar-h: 52px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -66,6 +70,7 @@
     --bg-soft:     #111119;
     --border:      #1F2028;
     --border-soft: #171822;
+    --scrim:       rgba(0, 0, 0, 0.60);
 
     --indigo-bg:   #1E1B4B;
     --indigo-bg-2: #1B1A3A;
@@ -81,9 +86,6 @@
   }
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Reset
-   ───────────────────────────────────────────────────────────── */
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body {
@@ -97,63 +99,97 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 a { color: inherit; text-decoration: none; }
+button { font-family: inherit; border: 0; background: none; padding: 0; cursor: pointer; color: inherit; }
 
-/* ─────────────────────────────────────────────────────────────
-   Layout
-   ───────────────────────────────────────────────────────────── */
-.app {
-  display: grid;
-  grid-template-columns: 220px 1fr;
-  min-height: 100vh;
+/* Topbar */
+.topbar {
+  display: none;
+  position: sticky; top: 0; z-index: 30;
+  height: var(--topbar-h);
+  padding: 0 16px;
+  background: var(--bg);
+  border-bottom: 0.5px solid var(--border);
+  align-items: center;
+  gap: 12px;
 }
+.topbar .brand-mini { display: flex; align-items: center; gap: 10px; }
+.topbar .brand-mini .mono {
+  width: 26px; height: 26px;
+  display: grid; place-items: center;
+  font-family: var(--mono);
+  font-size: 13px; font-weight: 500;
+  color: var(--indigo-500); background: var(--indigo-bg);
+  border-radius: var(--r-sm); letter-spacing: -0.02em;
+}
+.topbar .brand-mini .name {
+  font-family: var(--sans); font-weight: 300; font-size: 18px; letter-spacing: -0.02em;
+}
+.menu-btn {
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  border-radius: var(--r-sm);
+  color: var(--fg-muted);
+  transition: background 120ms, color 120ms;
+}
+.menu-btn:hover { background: var(--bg-soft); color: var(--fg); }
+.menu-btn svg { width: 18px; height: 18px; display: block; }
+
+.scrim {
+  display: none; position: fixed; inset: 0;
+  background: var(--scrim); z-index: 20;
+  opacity: 0; transition: opacity 180ms ease;
+}
+.scrim.show { opacity: 1; }
+
+/* Layout */
+.app { display: grid; grid-template-columns: var(--sb-w) 1fr; min-height: 100vh; }
 
 .sidebar {
-  position: fixed;
-  top: 0; left: 0; bottom: 0;
-  width: 220px;
+  position: fixed; top: 0; left: 0; bottom: 0;
+  width: var(--sb-w);
   border-right: 0.5px solid var(--border);
   background: var(--bg);
   overflow-y: auto;
   padding: 20px 0 72px;
-  z-index: 10;
+  z-index: 25;
+  transition: transform 220ms cubic-bezier(.22, .61, .36, 1);
 }
 .brand {
   display: flex; align-items: center; gap: 10px;
   padding: 0 20px 20px;
 }
 .brand .mono {
-  width: 26px; height: 26px;
+  width: 28px; height: 28px;
   display: grid; place-items: center;
   font-family: var(--mono);
   font-size: 13px; font-weight: 500;
-  color: var(--indigo-500);
-  background: var(--indigo-bg);
-  border-radius: var(--r-sm);
-  letter-spacing: -0.02em;
+  color: var(--indigo-500); background: var(--indigo-bg);
+  border-radius: var(--r-sm); letter-spacing: -0.02em;
 }
 .brand .name {
-  font-family: var(--sans);
-  font-weight: 300;
-  font-size: 20px;
-  letter-spacing: -0.02em;
+  font-family: var(--sans); font-weight: 300; font-size: 20px; letter-spacing: -0.02em;
 }
+.sidebar .close-btn {
+  display: none;
+  position: absolute; top: 18px; right: 14px;
+  width: 30px; height: 30px;
+  place-items: center;
+  border-radius: var(--r-sm);
+  color: var(--fg-muted);
+}
+.sidebar .close-btn:hover { background: var(--bg-soft); color: var(--fg); }
+.sidebar .close-btn svg { width: 16px; height: 16px; }
 
 .nav-group { padding: 0 12px; margin-top: 18px; }
 .nav-label {
   font-family: var(--mono);
   font-size: 10px; font-weight: 400;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--fg-subtle);
   padding: 0 8px 6px;
   display: flex; align-items: center; gap: 6px;
 }
-.dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  display: inline-block;
-  flex: none;
-}
+.dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; flex: none; }
 .dot.primitive  { background: var(--ns-primitive); }
 .dot.generic    { background: var(--ns-generic); }
 .dot.legacy     { background: var(--ns-legacy); }
@@ -162,10 +198,8 @@ a { color: inherit; text-decoration: none; }
 
 .nav-list { list-style: none; margin: 0; padding: 0; }
 .nav-item a {
-  display: block;
-  padding: 5px 8px;
-  font-family: var(--mono);
-  font-size: 12px;
+  display: block; padding: 5px 8px;
+  font-family: var(--mono); font-size: 12px;
   color: var(--fg-muted);
   border-radius: var(--r-sm);
   transition: background 120ms, color 120ms;
@@ -181,43 +215,28 @@ a { color: inherit; text-decoration: none; }
 }
 
 .side-footer {
-  position: absolute;
-  bottom: 16px;
-  left: 20px; right: 20px;
-  font-family: var(--serif);
-  font-style: italic;
-  font-weight: 300;
-  font-size: 11px;
-  color: var(--fg-subtle);
-  line-height: 1.5;
+  position: absolute; bottom: 16px; left: 20px; right: 20px;
+  font-family: var(--serif); font-style: italic; font-weight: 300;
+  font-size: 11px; color: var(--fg-subtle); line-height: 1.5;
 }
 
 .main {
   grid-column: 2;
   padding: 56px 48px 80px;
-  display: flex;
-  justify-content: center;
+  display: flex; justify-content: center;
 }
 .content { width: 100%; max-width: 760px; }
 
-/* ─────────────────────────────────────────────────────────────
-   Hero
-   ───────────────────────────────────────────────────────────── */
+/* Hero */
 .hero { margin-bottom: 28px; }
-.badges {
-  display: flex; flex-wrap: wrap; gap: 6px;
-  margin-bottom: 14px;
-}
+.badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
 .badge {
   font-family: var(--mono);
   font-size: 10px; font-weight: 400;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 3px 8px;
-  border-radius: 999px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 999px;
   border: 0.5px solid var(--border);
-  color: var(--fg-muted);
-  background: var(--bg-soft);
+  color: var(--fg-muted); background: var(--bg-soft);
 }
 .badge.ns-generic    { color: var(--ns-generic);    background: var(--ns-generic-bg);    border-color: transparent; }
 .badge.ns-primitive  { color: var(--ns-primitive);  background: var(--ns-primitive-bg);  border-color: transparent; }
@@ -228,94 +247,58 @@ a { color: inherit; text-decoration: none; }
 .badge.warn          { color: var(--ns-immutable);  background: var(--ns-immutable-bg);  border-color: transparent; }
 
 .display {
-  font-family: var(--mono);
-  font-weight: 400;
-  font-size: 28px;
-  letter-spacing: -0.02em;
-  color: var(--fg);
-  margin: 0 0 8px;
-  line-height: 1.25;
+  font-family: var(--mono); font-weight: 400;
+  font-size: 28px; letter-spacing: -0.02em;
+  color: var(--fg); margin: 0 0 8px; line-height: 1.25;
 }
 .hero-lead {
-  font-family: var(--sans);
-  font-size: 14px;
-  color: var(--fg-muted);
-  margin: 0;
-  max-width: 62ch;
+  font-family: var(--sans); font-size: 14px;
+  color: var(--fg-muted); margin: 0; max-width: 62ch;
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Metric tiles
-   ───────────────────────────────────────────────────────────── */
+/* Metrics */
 .metrics {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin: 24px 0 28px;
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 10px; margin: 24px 0 28px;
 }
 .metric {
   border: 0.5px solid var(--border);
   border-radius: var(--r-lg);
-  padding: 14px 16px;
-  background: var(--bg);
+  padding: 14px 16px; background: var(--bg);
 }
 .metric .label {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--fg-subtle);
 }
 .metric .value {
-  font-family: var(--mono);
-  font-size: 18px;
-  color: var(--fg);
-  margin-top: 4px;
+  font-family: var(--mono); font-size: 18px;
+  color: var(--fg); margin-top: 4px;
 }
 .metric .note {
-  font-family: var(--serif);
-  font-style: italic;
-  font-weight: 300;
-  font-size: 12px;
-  color: var(--fg-muted);
-  margin-top: 2px;
+  font-family: var(--serif); font-style: italic; font-weight: 300;
+  font-size: 12px; color: var(--fg-muted); margin-top: 2px;
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Sections
-   ───────────────────────────────────────────────────────────── */
 section { margin-bottom: 32px; }
 h2.section-title {
-  font-family: var(--sans);
-  font-weight: 500;
-  font-size: 15px;
-  color: var(--fg);
-  margin: 0 0 10px;
-  letter-spacing: -0.01em;
+  font-family: var(--sans); font-weight: 500;
+  font-size: 15px; color: var(--fg);
+  margin: 0 0 10px; letter-spacing: -0.01em;
 }
 
 .when-use {
-  font-family: var(--serif);
-  font-style: italic;
-  font-weight: 300;
-  font-size: 14px;
-  color: var(--fg-muted);
-  line-height: 1.7;
+  font-family: var(--serif); font-style: italic; font-weight: 300;
+  font-size: 14px; color: var(--fg-muted); line-height: 1.7;
   border-left: 3px solid var(--ns-primitive);
-  padding: 2px 0 2px 14px;
-  margin: 0;
+  padding: 2px 0 2px 14px; margin: 0;
 }
 
-/* Code block */
 .code {
-  background: var(--code-bg);
-  color: var(--code-fg);
+  background: var(--code-bg); color: var(--code-fg);
   border-radius: var(--r-lg);
-  padding: 16px 18px;
-  overflow-x: auto;
-  font-family: var(--mono);
-  font-size: 12.5px;
-  line-height: 1.7;
+  padding: 16px 18px; overflow-x: auto;
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.7;
 }
 .code .kw  { color: var(--code-kw); }
 .code .ty  { color: var(--code-type); }
@@ -324,89 +307,91 @@ h2.section-title {
 .code .cmt { color: var(--code-cmt); font-style: italic; }
 pre { margin: 0; }
 
-/* Tables */
 .table-wrap {
   border: 0.5px solid var(--border);
   border-radius: var(--r-lg);
-  overflow: hidden;
+  overflow: hidden; overflow-x: auto;
 }
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
+table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 480px; }
 thead th {
   text-align: left;
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 400;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-family: var(--mono); font-size: 10px; font-weight: 400;
+  letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--fg-subtle);
   padding: 10px 14px;
   background: var(--bg-soft);
   border-bottom: 0.5px solid var(--border);
+  white-space: nowrap;
 }
-tbody td {
-  padding: 10px 14px;
-  border-bottom: 0.5px solid var(--border-soft);
-  vertical-align: top;
-}
+tbody td { padding: 10px 14px; border-bottom: 0.5px solid var(--border-soft); vertical-align: top; }
 tbody tr:last-child td { border-bottom: 0; }
-td.mono, th.mono {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--fg);
-}
-td.desc {
-  font-family: var(--sans);
-  color: var(--fg-muted);
-}
+td.mono, th.mono { font-family: var(--mono); font-size: 12px; color: var(--fg); white-space: nowrap; }
+td.desc { font-family: var(--sans); color: var(--fg-muted); }
 
-/* Related chips */
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
-  font-family: var(--mono);
-  font-size: 12px;
-  padding: 5px 10px;
-  border-radius: 999px;
+  font-family: var(--mono); font-size: 12px;
+  padding: 5px 10px; border-radius: 999px;
   border: 0.5px solid var(--border);
-  color: var(--fg-muted);
-  background: var(--bg);
-  transition: color 120ms, border-color 120ms;
-  cursor: pointer;
+  color: var(--fg-muted); background: var(--bg);
+  transition: color 120ms, border-color 120ms; cursor: pointer;
 }
 .chip:hover { color: var(--indigo-500); border-color: var(--indigo-300); }
 
-/* ─────────────────────────────────────────────────────────────
-   Responsive
-   ───────────────────────────────────────────────────────────── */
-@media (max-width: 860px) {
+/* Responsive */
+@media (max-width: 1100px) {
+  .main { padding: 48px 36px 80px; }
+}
+@media (max-width: 900px) {
   .app { grid-template-columns: 1fr; }
+  .main { grid-column: 1; padding: 24px 22px 60px; }
+  .topbar { display: flex; }
   .sidebar {
-    position: static;
-    width: 100%;
-    height: auto;
-    border-right: 0;
-    border-bottom: 0.5px solid var(--border);
-    padding-bottom: 20px;
+    transform: translateX(-100%);
+    width: min(84vw, 280px);
   }
-  .side-footer { position: static; margin-top: 16px; padding: 0 20px; }
-  .main { grid-column: 1; padding: 28px 20px 60px; }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar .close-btn { display: grid; }
+  .scrim.show { display: block; }
+  .side-footer { position: static; margin-top: 20px; padding: 0 20px; }
+}
+@media (max-width: 560px) {
   .metrics { grid-template-columns: 1fr; }
+  .display { font-size: 24px; }
+  .main { padding: 20px 16px 48px; }
+  .code { padding: 14px; font-size: 12px; }
 }
 </style>
 </head>
 <body>
 
+<header class="topbar" role="banner">
+  <button class="menu-btn" id="menuOpen" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+      <path d="M4 7h16M4 12h16M4 17h16"/>
+    </svg>
+  </button>
+  <a class="brand-mini" href="../index.html">
+    <div class="mono">C#</div>
+    <div class="name">cs.blueprint</div>
+  </a>
+</header>
+
+<div class="scrim" id="scrim" aria-hidden="true"></div>
+
 <div class="app">
 
-  <!-- ─────────────── Sidebar ─────────────── -->
-  <aside class="sidebar" aria-label="Primary">
-    <div class="brand">
+  <aside class="sidebar" id="sidebar" aria-label="Primary">
+    <button class="close-btn" id="menuClose" aria-label="Close navigation">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M6 6l12 12M18 6L6 18"/>
+      </svg>
+    </button>
+
+    <a class="brand" href="../index.html">
       <div class="mono">C#</div>
-      <div class="name">csharp-reference</div>
-    </div>
+      <div class="name">cs.blueprint</div>
+    </a>
 
     <div class="nav-group">
       <div class="nav-label"><span class="dot primitive"></span>Array / Span / Memory</div>
@@ -425,7 +410,7 @@ td.desc {
         <li class="nav-item"><a href="stack.html">Stack&lt;T&gt;</a></li>
         <li class="nav-item"><a href="queue.html">Queue&lt;T&gt;</a></li>
         <li class="nav-item"><a href="priority-queue.html">PriorityQueue&lt;T,P&gt;</a></li>
-        <li class="nav-item"><a href="index.html">Dictionary&lt;K,V&gt;</a></li>
+        <li class="nav-item"><a href="../index.html">Dictionary&lt;K,V&gt;</a></li>
         <li class="nav-item"><a href="sorted-dictionary.html">SortedDictionary&lt;K,V&gt;</a></li>
         <li class="nav-item"><a href="sorted-list.html">SortedList&lt;K,V&gt;</a></li>
         <li class="nav-item"><a href="hashset.html">HashSet&lt;T&gt;</a></li>
@@ -478,11 +463,9 @@ td.desc {
     </div>
   </aside>
 
-  <!-- ─────────────── Main ─────────────── -->
   <main class="main">
     <article class="content">
 
-      <!-- Hero -->
       <header class="hero">
         <div class="badges">
           <span class="badge ns-primitive">System</span>
@@ -497,7 +480,6 @@ td.desc {
         </p>
       </header>
 
-      <!-- Metrics -->
       <div class="metrics" aria-label="Complexity">
         <div class="metric">
           <div class="label">Lookup</div>
@@ -516,7 +498,6 @@ td.desc {
         </div>
       </div>
 
-      <!-- When to use -->
       <section>
         <h2 class="section-title">When to use</h2>
         <p class="when-use">
@@ -524,7 +505,6 @@ td.desc {
         </p>
       </section>
 
-      <!-- Code example -->
       <section>
         <h2 class="section-title">Example</h2>
         <div class="code"><pre><span class="cmt">// Single-dimensional array</span>
@@ -552,7 +532,6 @@ grid[<span class="num">1</span>, <span class="num">2</span>] = <span class="num"
 <span class="ty">Array</span>.Resize(<span class="kw">ref</span> numbers, <span class="num">10</span>);</pre></div>
       </section>
 
-      <!-- Properties -->
       <section>
         <h2 class="section-title">Properties</h2>
         <div class="table-wrap">
@@ -561,47 +540,18 @@ grid[<span class="num">1</span>, <span class="num">2</span>] = <span class="num"
               <tr><th>Property</th><th>Type</th><th>Description</th></tr>
             </thead>
             <tbody>
-              <tr>
-                <td class="mono">Length</td>
-                <td class="mono">int</td>
-                <td class="desc">Total number of elements in all dimensions.</td>
-              </tr>
-              <tr>
-                <td class="mono">LongLength</td>
-                <td class="mono">long</td>
-                <td class="desc">Total element count as a 64-bit integer. Used for very large arrays.</td>
-              </tr>
-              <tr>
-                <td class="mono">Rank</td>
-                <td class="mono">int</td>
-                <td class="desc">Number of dimensions. Returns 1 for a vector, 2 for a matrix, and so on.</td>
-              </tr>
-              <tr>
-                <td class="mono">IsFixedSize</td>
-                <td class="mono">bool</td>
-                <td class="desc">Always true — arrays cannot be resized in place.</td>
-              </tr>
-              <tr>
-                <td class="mono">IsReadOnly</td>
-                <td class="mono">bool</td>
-                <td class="desc">Always false for standard arrays. May be true for read-only wrappers.</td>
-              </tr>
-              <tr>
-                <td class="mono">IsSynchronized</td>
-                <td class="mono">bool</td>
-                <td class="desc">Whether access is thread-safe. Always false for raw arrays.</td>
-              </tr>
-              <tr>
-                <td class="mono">SyncRoot</td>
-                <td class="mono">object</td>
-                <td class="desc">Object used to synchronize access for legacy locking patterns.</td>
-              </tr>
+              <tr><td class="mono">Length</td><td class="mono">int</td><td class="desc">Total number of elements in all dimensions.</td></tr>
+              <tr><td class="mono">LongLength</td><td class="mono">long</td><td class="desc">Total element count as a 64-bit integer. Used for very large arrays.</td></tr>
+              <tr><td class="mono">Rank</td><td class="mono">int</td><td class="desc">Number of dimensions. Returns 1 for a vector, 2 for a matrix, and so on.</td></tr>
+              <tr><td class="mono">IsFixedSize</td><td class="mono">bool</td><td class="desc">Always true — arrays cannot be resized in place.</td></tr>
+              <tr><td class="mono">IsReadOnly</td><td class="mono">bool</td><td class="desc">Always false for standard arrays. May be true for read-only wrappers.</td></tr>
+              <tr><td class="mono">IsSynchronized</td><td class="mono">bool</td><td class="desc">Whether access is thread-safe. Always false for raw arrays.</td></tr>
+              <tr><td class="mono">SyncRoot</td><td class="mono">object</td><td class="desc">Object used to synchronize access for legacy locking patterns.</td></tr>
             </tbody>
           </table>
         </div>
       </section>
 
-      <!-- Methods -->
       <section>
         <h2 class="section-title">Methods</h2>
         <div class="table-wrap">
@@ -610,122 +560,33 @@ grid[<span class="num">1</span>, <span class="num">2</span>] = <span class="num"
               <tr><th>Method</th><th>Signature</th><th>Complexity</th></tr>
             </thead>
             <tbody>
-              <tr>
-                <td class="mono">GetValue</td>
-                <td class="mono">GetValue(int) → object?</td>
-                <td class="mono">O(1)</td>
-              </tr>
-              <tr>
-                <td class="mono">SetValue</td>
-                <td class="mono">SetValue(object?, int)</td>
-                <td class="mono">O(1)</td>
-              </tr>
-              <tr>
-                <td class="mono">GetLength</td>
-                <td class="mono">GetLength(int) → int</td>
-                <td class="mono">O(1)</td>
-              </tr>
-              <tr>
-                <td class="mono">Clone</td>
-                <td class="mono">Clone() → object</td>
-                <td class="mono">O(n)</td>
-              </tr>
-              <tr>
-                <td class="mono">CopyTo</td>
-                <td class="mono">CopyTo(Array, int)</td>
-                <td class="mono">O(n)</td>
-              </tr>
-              <tr>
-                <td class="mono">Copy</td>
-                <td class="mono">Array.Copy(Array, Array, int)</td>
-                <td class="mono">O(n)</td>
-              </tr>
-              <tr>
-                <td class="mono">Clear</td>
-                <td class="mono">Array.Clear(Array, int, int)</td>
-                <td class="mono">O(n)</td>
-              </tr>
-              <tr>
-                <td class="mono">Resize</td>
-                <td class="mono">Array.Resize&lt;T&gt;(ref T[], int)</td>
-                <td class="mono">O(n)</td>
-              </tr>
-              <tr>
-                <td class="mono">Sort</td>
-                <td class="mono">Array.Sort&lt;T&gt;(T[])</td>
-                <td class="mono">O(n log n)</td>
-              </tr>
-              <tr>
-                <td class="mono">Reverse</td>
-                <td class="mono">Array.Reverse(Array)</td>
-                <td class="mono">O(n)</td>
-              </tr>
-              <tr>
-                <td class="mono">IndexOf</td>
-                <td class="mono">Array.IndexOf&lt;T&gt;(T[], T) → int</td>
-                <td class="mono">O(n)</td>
-              </tr>
-              <tr>
-                <td class="mono">LastIndexOf</td>
-                <td class="mono">Array.LastIndexOf&lt;T&gt;(T[], T) → int</td>
-                <td class="mono">O(n)</td>
-              </tr>
-              <tr>
-                <td class="mono">BinarySearch</td>
-                <td class="mono">Array.BinarySearch&lt;T&gt;(T[], T) → int</td>
-                <td class="mono">O(log n)</td>
-              </tr>
-              <tr>
-                <td class="mono">Find</td>
-                <td class="mono">Array.Find&lt;T&gt;(T[], Predicate&lt;T&gt;) → T?</td>
-                <td class="mono">O(n)</td>
-              </tr>
-              <tr>
-                <td class="mono">FindAll</td>
-                <td class="mono">Array.FindAll&lt;T&gt;(T[], Predicate&lt;T&gt;) → T[]</td>
-                <td class="mono">O(n)</td>
-              </tr>
-              <tr>
-                <td class="mono">Exists</td>
-                <td class="mono">Array.Exists&lt;T&gt;(T[], Predicate&lt;T&gt;) → bool</td>
-                <td class="mono">O(n)</td>
-              </tr>
-              <tr>
-                <td class="mono">TrueForAll</td>
-                <td class="mono">Array.TrueForAll&lt;T&gt;(T[], Predicate&lt;T&gt;) → bool</td>
-                <td class="mono">O(n)</td>
-              </tr>
-              <tr>
-                <td class="mono">ConvertAll</td>
-                <td class="mono">Array.ConvertAll&lt;T,U&gt;(T[], Converter&lt;T,U&gt;) → U[]</td>
-                <td class="mono">O(n)</td>
-              </tr>
-              <tr>
-                <td class="mono">ForEach</td>
-                <td class="mono">Array.ForEach&lt;T&gt;(T[], Action&lt;T&gt;)</td>
-                <td class="mono">O(n)</td>
-              </tr>
-              <tr>
-                <td class="mono">AsReadOnly</td>
-                <td class="mono">Array.AsReadOnly&lt;T&gt;(T[]) → ReadOnlyCollection&lt;T&gt;</td>
-                <td class="mono">O(1)</td>
-              </tr>
-              <tr>
-                <td class="mono">Fill</td>
-                <td class="mono">Array.Fill&lt;T&gt;(T[], T)</td>
-                <td class="mono">O(n)</td>
-              </tr>
-              <tr>
-                <td class="mono">Empty</td>
-                <td class="mono">Array.Empty&lt;T&gt;() → T[]</td>
-                <td class="mono">O(1)</td>
-              </tr>
+              <tr><td class="mono">GetValue</td><td class="mono">GetValue(int) → object?</td><td class="mono">O(1)</td></tr>
+              <tr><td class="mono">SetValue</td><td class="mono">SetValue(object?, int)</td><td class="mono">O(1)</td></tr>
+              <tr><td class="mono">GetLength</td><td class="mono">GetLength(int) → int</td><td class="mono">O(1)</td></tr>
+              <tr><td class="mono">Clone</td><td class="mono">Clone() → object</td><td class="mono">O(n)</td></tr>
+              <tr><td class="mono">CopyTo</td><td class="mono">CopyTo(Array, int)</td><td class="mono">O(n)</td></tr>
+              <tr><td class="mono">Copy</td><td class="mono">Array.Copy(Array, Array, int)</td><td class="mono">O(n)</td></tr>
+              <tr><td class="mono">Clear</td><td class="mono">Array.Clear(Array, int, int)</td><td class="mono">O(n)</td></tr>
+              <tr><td class="mono">Resize</td><td class="mono">Array.Resize&lt;T&gt;(ref T[], int)</td><td class="mono">O(n)</td></tr>
+              <tr><td class="mono">Sort</td><td class="mono">Array.Sort&lt;T&gt;(T[])</td><td class="mono">O(n log n)</td></tr>
+              <tr><td class="mono">Reverse</td><td class="mono">Array.Reverse(Array)</td><td class="mono">O(n)</td></tr>
+              <tr><td class="mono">IndexOf</td><td class="mono">Array.IndexOf&lt;T&gt;(T[], T) → int</td><td class="mono">O(n)</td></tr>
+              <tr><td class="mono">LastIndexOf</td><td class="mono">Array.LastIndexOf&lt;T&gt;(T[], T) → int</td><td class="mono">O(n)</td></tr>
+              <tr><td class="mono">BinarySearch</td><td class="mono">Array.BinarySearch&lt;T&gt;(T[], T) → int</td><td class="mono">O(log n)</td></tr>
+              <tr><td class="mono">Find</td><td class="mono">Array.Find&lt;T&gt;(T[], Predicate&lt;T&gt;) → T?</td><td class="mono">O(n)</td></tr>
+              <tr><td class="mono">FindAll</td><td class="mono">Array.FindAll&lt;T&gt;(T[], Predicate&lt;T&gt;) → T[]</td><td class="mono">O(n)</td></tr>
+              <tr><td class="mono">Exists</td><td class="mono">Array.Exists&lt;T&gt;(T[], Predicate&lt;T&gt;) → bool</td><td class="mono">O(n)</td></tr>
+              <tr><td class="mono">TrueForAll</td><td class="mono">Array.TrueForAll&lt;T&gt;(T[], Predicate&lt;T&gt;) → bool</td><td class="mono">O(n)</td></tr>
+              <tr><td class="mono">ConvertAll</td><td class="mono">Array.ConvertAll&lt;T,U&gt;(T[], Converter&lt;T,U&gt;) → U[]</td><td class="mono">O(n)</td></tr>
+              <tr><td class="mono">ForEach</td><td class="mono">Array.ForEach&lt;T&gt;(T[], Action&lt;T&gt;)</td><td class="mono">O(n)</td></tr>
+              <tr><td class="mono">AsReadOnly</td><td class="mono">Array.AsReadOnly&lt;T&gt;(T[]) → ReadOnlyCollection&lt;T&gt;</td><td class="mono">O(1)</td></tr>
+              <tr><td class="mono">Fill</td><td class="mono">Array.Fill&lt;T&gt;(T[], T)</td><td class="mono">O(n)</td></tr>
+              <tr><td class="mono">Empty</td><td class="mono">Array.Empty&lt;T&gt;() → T[]</td><td class="mono">O(1)</td></tr>
             </tbody>
           </table>
         </div>
       </section>
 
-      <!-- Multi-dimensional note -->
       <section>
         <h2 class="section-title">Array shapes</h2>
         <div class="table-wrap">
@@ -734,27 +595,14 @@ grid[<span class="num">1</span>, <span class="num">2</span>] = <span class="num"
               <tr><th>Shape</th><th>Syntax</th><th>Description</th></tr>
             </thead>
             <tbody>
-              <tr>
-                <td class="mono">Single-dimensional</td>
-                <td class="mono">int[]</td>
-                <td class="desc">The most common form. Zero-indexed vector of elements.</td>
-              </tr>
-              <tr>
-                <td class="mono">Multi-dimensional</td>
-                <td class="mono">int[,] · int[,,]</td>
-                <td class="desc">Rectangular grid stored as a single contiguous block of memory.</td>
-              </tr>
-              <tr>
-                <td class="mono">Jagged</td>
-                <td class="mono">int[][]</td>
-                <td class="desc">An array of arrays — each inner row can have a different length.</td>
-              </tr>
+              <tr><td class="mono">Single-dimensional</td><td class="mono">int[]</td><td class="desc">The most common form. Zero-indexed vector of elements.</td></tr>
+              <tr><td class="mono">Multi-dimensional</td><td class="mono">int[,] · int[,,]</td><td class="desc">Rectangular grid stored as a single contiguous block of memory.</td></tr>
+              <tr><td class="mono">Jagged</td><td class="mono">int[][]</td><td class="desc">An array of arrays — each inner row can have a different length.</td></tr>
             </tbody>
           </table>
         </div>
       </section>
 
-      <!-- Related -->
       <section>
         <h2 class="section-title">Related structures</h2>
         <div class="chips">
@@ -769,6 +617,24 @@ grid[<span class="num">1</span>, <span class="num">2</span>] = <span class="num"
     </article>
   </main>
 </div>
+
+<script>
+(function () {
+  const sb = document.getElementById('sidebar');
+  const scrim = document.getElementById('scrim');
+  const openB = document.getElementById('menuOpen');
+  const closeB = document.getElementById('menuClose');
+  function open()  { sb.classList.add('open'); scrim.classList.add('show'); openB.setAttribute('aria-expanded','true'); document.body.style.overflow='hidden'; }
+  function close() { sb.classList.remove('open'); scrim.classList.remove('show'); openB.setAttribute('aria-expanded','false'); document.body.style.overflow=''; }
+  openB.addEventListener('click', open);
+  closeB.addEventListener('click', close);
+  scrim.addEventListener('click', close);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+  sb.querySelectorAll('.nav-item a').forEach(a => a.addEventListener('click', () => {
+    if (window.matchMedia('(max-width: 900px)').matches) close();
+  }));
+})();
+</script>
 
 </body>
 </html>
