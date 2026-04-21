@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LinkedList&lt;T&gt; — A Technical Monograph</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper:      #f2ede3;
+    --paper-2:    #eae4d6;
+    --paper-3:    #dfd8c6;
+    --ink:        #14140f;
+    --ink-soft:   #3d3a33;
+    --ink-faint:  #6b665b;
+    --rule:       #14140f;
+    --accent:     #c24a1e;
+    --accent-2:   #1a3d3d;
+    --mark:       #f4dc4a;
+    --code-bg:    #14140f;
+    --code-fg:    #f2ede3;
+    --code-key:   #e8a765;
+    --code-str:   #a8c77a;
+    --code-num:   #f4dc4a;
+    --code-com:   #8a8577;
+    --code-type:  #72c4c0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(194, 74, 30, 0.04) 0%, transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(26, 61, 61, 0.04) 0%, transparent 40%);
+    min-height: 100vh;
+  }
+
+  /* ─── Grain overlay ──────────────────────────────── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.35;
+    mix-blend-mode: multiply;
+    z-index: 1;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.08 0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 0.4 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
+  }
+
+  /* ─── Layout ─────────────────────────────────────── */
+  .wrap {
+    position: relative;
+    z-index: 2;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  /* ─── Top bar ────────────────────────────────────── */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--rule);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  .topbar .dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.15); }
+  }
+
+  /* ─── Hero ───────────────────────────────────────── */
+  .hero {
+    padding: 80px 0 60px;
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+  }
+
+  .hero .volume {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--ink-faint);
+    margin-bottom: 24px;
+  }
+
+  .hero h1 {
+    font-family: 'Instrument Serif', serif;
+    font-weight: 400;
+    font-size: clamp(64px, 12vw, 168px);
+    line-height: 0.88;
+    letter-spacing: -0.03em;
+    margin-bottom: 32px;
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .hero .tagline {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: clamp(20px, 2.5vw, 30px);
+    line-height: 1.3;
+    max-width: 680px;
+    color: var(--ink-soft);
+    margin-bottom: 40px;
+  }
+
+  .hero .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--rule);
+    margin-top: 48px;
+  }
+
+  .hero .meta-grid > div {
+    padding: 16px 20px 16px 0;
+    border-right: 1px solid var(--rule);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .hero .meta-grid > div:last-child {
+    border-right: none;
+    padding-right: 0;
+  }
+
+  .hero .meta-grid .label {
+    color: var(--ink-faint);
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .hero .meta-grid .value {
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  /* ─── Table of Contents ─────────────────────────── */
+  .toc {
+    padding: 48px 0;
+    border-bottom: 1px solid var(--rule);
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 60px;
+  }
+
+  .toc h2 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--ink-faint);
+    font-weight: 500;
+  }
+
+  .toc ol {
+    list-style: none;
+    counter-reset: toc;
+    columns: 2;
+    column-gap: 40px;
+  }
+
+  .toc ol li {
+    counter-increment: toc;
+    padding: 10px 0;
+    border-bottom: 1px dotted var(--ink-faint);
+    break-inside: avoid;
+  }
+
+  .toc ol li a {
+    color: var(--ink);
+    text-decoration: none;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    font-size: 15px;
+    transition: color 0.2s;
+  }
+
+  .toc ol li a:hover { color: var(--accent); }
+
+  .toc ol li a::before {
+    content: counter(toc, decimal-leading-zero);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.1em;
+    min-width: 30px;
+  }
+
+  /* ─── Sections ───────────────────────────────────── */
+  section {
+    padding: 80px 0;
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+  }
+
+  .section-header {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 60px;
+    margin-bottom: 48px;
+    align-items: baseline;
+  }
+
+  .section-header .sigil {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    padding-top: 12px;
+  }
+
+  .section-header h2 {
+    font-family: 'Instrument Serif', serif;
+    font-weight: 400;
+    font-size: clamp(40px, 6vw, 72px);
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+  }
+
+  .section-header h2 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .section-body {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 60px;
+  }
+
+  .section-body .margin-note {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-faint);
+    line-height: 1.5;
+  }
+
+  .section-body .margin-note::before {
+    content: '—';
+    margin-right: 6px;
+  }
+
+  .section-content { max-width: 780px; }
+
+  .section-content p {
+    font-size: 17px;
+    line-height: 1.7;
+    margin-bottom: 20px;
+    color: var(--ink-soft);
+  }
+
+  .section-content p strong { color: var(--ink); font-weight: 600; }
+  .section-content p em { font-family: 'Instrument Serif', serif; font-size: 1.1em; }
+
+  .drop-cap::first-letter {
+    font-family: 'Instrument Serif', serif;
+    font-size: 88px;
+    font-style: italic;
+    float: left;
+    line-height: 0.85;
+    padding: 8px 14px 0 0;
+    color: var(--accent);
+  }
+
+  /* ─── Anatomy Diagram ────────────────────────────── */
+  .anatomy {
+    margin: 48px 0;
+    padding: 40px;
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    position: relative;
+  }
+
+  .anatomy::before {
+    content: 'FIG. 01 — NODE ANATOMY';
+    position: absolute;
+    top: -1px; left: -1px;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 6px 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+  }
+
+  .node-diagram {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
+    padding: 40px 0 20px;
+    flex-wrap: wrap;
+  }
+
+  .diagram-node {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    border: 2px solid var(--ink);
+    background: var(--paper);
+    min-width: 110px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    position: relative;
+  }
+
+  .diagram-node .field {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--ink);
+    text-align: center;
+  }
+  .diagram-node .field:last-child { border-bottom: none; }
+  .diagram-node .field-label {
+    color: var(--ink-faint);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 2px;
+  }
+  .diagram-node .field-val { color: var(--ink); font-weight: 600; font-size: 14px; }
+  .diagram-node.highlight .field-val { color: var(--accent); }
+
+  .diagram-link {
+    height: 2px;
+    width: 40px;
+    background: var(--ink);
+    position: relative;
+  }
+  .diagram-link::before, .diagram-link::after {
+    content: '';
+    position: absolute;
+    width: 8px; height: 8px;
+    border-top: 2px solid var(--ink);
+    border-right: 2px solid var(--ink);
+  }
+  .diagram-link::before { right: 0; top: -4px; transform: rotate(45deg); }
+  .diagram-link::after  { left: 0;  top: -4px; transform: rotate(-135deg); }
+
+  .diagram-null {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    color: var(--ink-faint);
+    padding: 0 8px;
+  }
+
+  /* ─── Interactive Playground ─────────────────────── */
+  .playground {
+    margin: 48px 0;
+    border: 2px solid var(--ink);
+    background: var(--paper-2);
+    position: relative;
+  }
+
+  .playground-header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 14px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  .playground-header .status {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  .playground-header .status span { color: var(--code-key); }
+  .playground-header .status b { color: var(--paper); font-weight: 600; margin-left: 6px; }
+
+  .playground-viz {
+    min-height: 200px;
+    padding: 40px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    overflow-x: auto;
+    background:
+      linear-gradient(var(--paper-3) 1px, transparent 1px) 0 0 / 24px 24px,
+      linear-gradient(90deg, var(--paper-3) 1px, transparent 1px) 0 0 / 24px 24px,
+      var(--paper-2);
+  }
+
+  .viz-list {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0 20px;
+    min-width: 100%;
+  }
+
+  .viz-null {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    color: var(--ink-faint);
+    font-size: 22px;
+    padding: 0 10px;
+    flex-shrink: 0;
+  }
+
+  .viz-node {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    border: 2px solid var(--ink);
+    background: var(--paper);
+    min-width: 80px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    position: relative;
+    flex-shrink: 0;
+    animation: nodeEnter 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+    transform-origin: center;
+  }
+
+  @keyframes nodeEnter {
+    0%   { opacity: 0; transform: translateY(-20px) scale(0.7); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .viz-node.exiting {
+    animation: nodeExit 0.3s ease-in forwards;
+  }
+
+  @keyframes nodeExit {
+    0%   { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.6) translateY(-16px); }
+  }
+
+  .viz-node.found {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(194, 74, 30, 0.2);
+  }
+
+  .viz-node .viz-val {
+    padding: 14px 16px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--ink);
+  }
+
+  .viz-node .viz-tag {
+    border-top: 1px solid var(--ink);
+    padding: 4px 8px;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    text-align: center;
+    color: var(--ink-faint);
+  }
+
+  .viz-node.head .viz-tag { background: var(--ink); color: var(--paper); }
+  .viz-node.tail .viz-tag { background: var(--accent); color: var(--paper); }
+
+  .viz-link {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 44px;
+    flex-shrink: 0;
+    padding: 0 2px;
+  }
+
+  .viz-link .arrow {
+    height: 2px;
+    background: var(--ink);
+    position: relative;
+  }
+  .viz-link .arrow.fwd::after {
+    content: '';
+    position: absolute;
+    right: 0; top: -4px;
+    width: 8px; height: 8px;
+    border-top: 2px solid var(--ink);
+    border-right: 2px solid var(--ink);
+    transform: rotate(45deg);
+  }
+  .viz-link .arrow.bwd::before {
+    content: '';
+    position: absolute;
+    left: 0; top: -4px;
+    width: 8px; height: 8px;
+    border-top: 2px solid var(--ink);
+    border-left: 2px solid var(--ink);
+    transform: rotate(-45deg);
+  }
+
+  .playground-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 2px solid var(--ink);
+  }
+
+  .control-group {
+    padding: 20px 24px;
+  }
+  .control-group + .control-group { border-left: 1px solid var(--ink); }
+
+  .control-group h4 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--ink-faint);
+    margin-bottom: 14px;
+  }
+
+  .control-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .control-row input[type="text"] {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    padding: 8px 12px;
+    border: 1px solid var(--ink);
+    background: var(--paper);
+    width: 80px;
+    color: var(--ink);
+  }
+
+  .btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 500;
+    padding: 9px 14px;
+    border: 1px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn:hover { background: var(--ink); color: var(--paper); }
+  .btn:active { transform: translateY(1px); }
+  .btn.accent { background: var(--accent); color: var(--paper); border-color: var(--accent); }
+  .btn.accent:hover { background: var(--ink); border-color: var(--ink); }
+  .btn.ghost { background: transparent; }
+
+  .playground-log {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 14px 24px;
+    min-height: 50px;
+    max-height: 90px;
+    overflow-y: auto;
+    border-top: 2px solid var(--ink);
+  }
+  .playground-log .log-line { margin: 2px 0; }
+  .playground-log .log-time { color: var(--ink-faint); margin-right: 10px; }
+  .playground-log .log-op   { color: var(--code-key); font-weight: 600; }
+  .playground-log .log-err  { color: var(--accent); }
+
+  /* ─── Code blocks ────────────────────────────────── */
+  .code-block {
+    margin: 24px 0;
+    border: 1px solid var(--ink);
+    background: var(--code-bg);
+    color: var(--code-fg);
+    position: relative;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    overflow: hidden;
+  }
+
+  .code-block .code-head {
+    background: #0a0a08;
+    padding: 8px 16px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--code-com);
+    border-bottom: 1px solid #2a2a22;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .code-block pre {
+    padding: 18px 20px;
+    overflow-x: auto;
+  }
+
+  .code-block .copy {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: transparent;
+    border: 1px solid var(--code-com);
+    color: var(--code-com);
+    padding: 3px 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .code-block .copy:hover { color: var(--code-fg); border-color: var(--code-fg); }
+  .code-block .copy.copied { color: var(--code-str); border-color: var(--code-str); }
+
+  .tok-key  { color: var(--code-key); }
+  .tok-str  { color: var(--code-str); }
+  .tok-num  { color: var(--code-num); }
+  .tok-com  { color: var(--code-com); font-style: italic; }
+  .tok-type { color: var(--code-type); }
+
+  /* ─── Tabbed operations ──────────────────────────── */
+  .tabs {
+    margin: 32px 0;
+    border: 1px solid var(--ink);
+  }
+  .tab-bar {
+    display: flex;
+    background: var(--paper-2);
+    border-bottom: 1px solid var(--ink);
+    overflow-x: auto;
+  }
+  .tab-btn {
+    flex-shrink: 0;
+    padding: 14px 22px;
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--ink);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    color: var(--ink-soft);
+    transition: all 0.15s;
+  }
+  .tab-btn:hover { color: var(--ink); background: var(--paper-3); }
+  .tab-btn.active {
+    background: var(--ink);
+    color: var(--paper);
+    font-weight: 500;
+  }
+  .tab-btn .complexity {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 2px 6px;
+    background: var(--accent);
+    color: var(--paper);
+    font-size: 9px;
+    border-radius: 2px;
+  }
+  .tab-btn.active .complexity { background: var(--mark); color: var(--ink); }
+  .tab-panel { display: none; padding: 0; }
+  .tab-panel.active { display: block; }
+  .tab-panel p {
+    padding: 20px 24px 0;
+    font-size: 15px;
+    color: var(--ink-soft);
+  }
+  .tab-panel .code-block { border: none; border-top: 1px solid var(--ink); margin: 20px 0 0; }
+
+  /* ─── Complexity Matrix ──────────────────────────── */
+  .matrix {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 32px 0;
+    font-size: 14px;
+  }
+  .matrix th, .matrix td {
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--ink-faint);
+  }
+  .matrix thead th {
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 500;
+    border-bottom: 2px solid var(--ink);
+  }
+  .matrix tbody td {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+  }
+  .matrix tbody tr:nth-child(even) { background: var(--paper-2); }
+  .matrix tbody td:first-child {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 500;
+  }
+  .big-o {
+    display: inline-block;
+    padding: 3px 10px;
+    font-weight: 600;
+    border-radius: 2px;
+    font-size: 12px;
+  }
+  .big-o.good { background: #c5d4a8; color: #2d3d15; }
+  .big-o.mid  { background: #f4dc4a; color: #3d3210; }
+  .big-o.bad  { background: #e8a89a; color: #5a1810; }
+  .big-o.no   { background: var(--ink-faint); color: var(--paper); font-style: italic; }
+
+  /* ─── Pull quote ─────────────────────────────────── */
+  .pullquote {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: clamp(26px, 3.5vw, 40px);
+    line-height: 1.2;
+    margin: 48px 0;
+    padding: 32px 48px;
+    border-left: 4px solid var(--accent);
+    color: var(--ink);
+    position: relative;
+  }
+  .pullquote::before {
+    content: '"';
+    position: absolute;
+    top: -10px; left: 30px;
+    font-family: 'Instrument Serif', serif;
+    font-size: 120px;
+    color: var(--accent);
+    opacity: 0.25;
+    line-height: 1;
+  }
+
+  /* ─── Two-column comparison ─────────────────────── */
+  .versus {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0;
+    margin: 32px 0;
+    border: 1px solid var(--ink);
+    background: var(--paper-2);
+  }
+  .versus > div { padding: 24px 28px; }
+  .versus .divider {
+    width: 1px;
+    background: var(--ink);
+    position: relative;
+  }
+  .versus .divider::before {
+    content: 'VS';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 28px;
+    background: var(--paper-2);
+    padding: 8px 4px;
+    color: var(--accent);
+  }
+  .versus h4 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--ink-faint);
+    margin-bottom: 12px;
+  }
+  .versus h3 {
+    font-family: 'Instrument Serif', serif;
+    font-weight: 400;
+    font-size: 32px;
+    margin-bottom: 16px;
+  }
+  .versus ul { list-style: none; }
+  .versus li {
+    font-size: 14px;
+    padding: 6px 0 6px 20px;
+    position: relative;
+    color: var(--ink-soft);
+  }
+  .versus li::before {
+    content: '›';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* ─── Warnings / Notes ───────────────────────────── */
+  .callout {
+    margin: 28px 0;
+    padding: 20px 24px;
+    border-left: 3px solid var(--accent);
+    background: var(--paper-2);
+    position: relative;
+  }
+  .callout .tag {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .callout.note { border-left-color: var(--accent-2); }
+  .callout.note .tag { color: var(--accent-2); }
+
+  /* ─── Footer ─────────────────────────────────────── */
+  footer {
+    padding: 60px 0 40px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--ink-faint);
+    display: grid;
+    grid-template-columns: 180px 1fr auto;
+    gap: 60px;
+    align-items: start;
+  }
+  footer .colophon {
+    max-width: 600px;
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 18px;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+
+  /* ─── Inline accents ─────────────────────────────── */
+  code.inline {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.9em;
+    background: var(--paper-3);
+    padding: 1px 6px;
+    border-radius: 2px;
+    color: var(--ink);
+  }
+
+  /* ─── Responsive ─────────────────────────────────── */
+  @media (max-width: 900px) {
+    .wrap { padding: 0 20px; }
+    .hero .meta-grid { grid-template-columns: repeat(2, 1fr); }
+    .hero .meta-grid > div:nth-child(2) { border-right: none; }
+    .toc { grid-template-columns: 1fr; gap: 20px; }
+    .toc ol { columns: 1; }
+    .section-header, .section-body { grid-template-columns: 1fr; gap: 20px; }
+    .section-header .sigil { color: var(--accent); padding-top: 0; }
+    .playground-controls { grid-template-columns: 1fr; }
+    .control-group + .control-group { border-left: none; border-top: 1px solid var(--ink); }
+    .versus { grid-template-columns: 1fr; }
+    .versus .divider { width: auto; height: 1px; }
+    .versus .divider::before { top: 50%; }
+    footer { grid-template-columns: 1fr; gap: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- ─── TOP BAR ────────────────────────────────── -->
+  <div class="topbar">
+    <span><span class="dot"></span>LIVE DOCUMENT</span>
+    <span>NAMESPACE · System.Collections.Generic</span>
+    <span>REV. 2026.04</span>
+  </div>
+
+  <!-- ─── HERO ───────────────────────────────────── -->
+  <header class="hero">
+    <div class="volume">Monograph No. 02 · Linear Data Structures</div>
+    <h1>Linked<em>List</em><br>&lt;T&gt;</h1>
+    <p class="tagline">An interactive, annotated study of C#&#39;s doubly-linked list — its nodes, its pointers, and the precise moments it outperforms the humble <em>List&lt;T&gt;</em>.</p>
+    <div class="meta-grid">
+      <div><span class="label">Runtime</span><span class="value">.NET 10</span></div>
+      <div><span class="label">Language</span><span class="value">C# 14</span></div>
+      <div><span class="label">Namespace</span><span class="value">Generic</span></div>
+      <div><span class="label">Structure</span><span class="value">Doubly Linked</span></div>
+    </div>
+  </header>
+
+  <!-- ─── TOC ────────────────────────────────────── -->
+  <nav class="toc">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#overview">Overview &amp; shape</a></li>
+      <li><a href="#anatomy">Anatomy of a node</a></li>
+      <li><a href="#playground">Interactive playground</a></li>
+      <li><a href="#operations">Core operations</a></li>
+      <li><a href="#complexity">Complexity matrix</a></li>
+      <li><a href="#vs-list">LinkedList vs List</a></li>
+      <li><a href="#modern">Modern C# 14 idioms</a></li>
+      <li><a href="#pitfalls">Pitfalls &amp; caveats</a></li>
+    </ol>
+  </nav>
+
+  <!-- ─── 01 OVERVIEW ────────────────────────────── -->
+  <section id="overview">
+    <div class="section-header">
+      <div class="sigil">§ 01 / Overview</div>
+      <h2>A chain of <em>nodes</em>, each pointing to the next and back to the previous.</h2>
+    </div>
+    <div class="section-body">
+      <div class="margin-note">
+        LinkedList&lt;T&gt; lives in <br>System.Collections.Generic<br>since .NET 2.0 (generic)
+      </div>
+      <div class="section-content">
+        <p class="drop-cap">Where an array lays its elements down in a single contiguous block of memory, a <strong>linked list</strong> scatters them across the heap and stitches them together with pointers. Each element — a <em>node</em> — knows only about its immediate neighbours, and the list itself holds references to just the first and last nodes.</p>
+        <p>.NET&#39;s <code class="inline">LinkedList&lt;T&gt;</code> is <strong>doubly linked</strong>: every node carries a reference to both its predecessor and its successor. This gives you O(1) insertion and removal at either end, or at any position where you already hold a reference to the relevant node. The price you pay is per-node memory overhead and worse cache locality than a flat array.</p>
+        <div class="pullquote">
+          A linked list is not a faster list. It is a different shape &mdash; chosen for the operations it makes constant-time.
+        </div>
+        <p>Use it for queues that grow and shrink at both ends, for LRU caches paired with a dictionary, for editor undo stacks, and for any scenario where you insert or remove in the middle <em>and</em> already hold the node. For almost everything else, reach for <code class="inline">List&lt;T&gt;</code>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 02 ANATOMY ─────────────────────────────── -->
+  <section id="anatomy">
+    <div class="section-header">
+      <div class="sigil">§ 02 / Anatomy</div>
+      <h2>Each node, a small <em>three-field</em> record.</h2>
+    </div>
+    <div class="section-body">
+      <div class="margin-note">
+        LinkedListNode&lt;T&gt; is sealed; you cannot subclass it. Properties are read-only from the outside.
+      </div>
+      <div class="section-content">
+        <p>A <code class="inline">LinkedListNode&lt;T&gt;</code> exposes four properties to your code: <code class="inline">Value</code>, <code class="inline">Next</code>, <code class="inline">Previous</code>, and <code class="inline">List</code>. The list itself owns <code class="inline">First</code>, <code class="inline">Last</code>, and <code class="inline">Count</code>. There is no indexer &mdash; <code class="inline">list[i]</code> does not compile.</p>
+
+        <div class="anatomy">
+          <div class="node-diagram">
+            <span class="diagram-null">null</span>
+            <div class="diagram-link"></div>
+            <div class="diagram-node highlight">
+              <div class="field"><div class="field-label">Prev</div><div class="field-val">◇</div></div>
+              <div class="field"><div class="field-label">Value</div><div class="field-val">42</div></div>
+              <div class="field"><div class="field-label">Next</div><div class="field-val">◇</div></div>
+            </div>
+            <div class="diagram-link"></div>
+            <div class="diagram-node">
+              <div class="field"><div class="field-label">Prev</div><div class="field-val">◇</div></div>
+              <div class="field"><div class="field-label">Value</div><div class="field-val">17</div></div>
+              <div class="field"><div class="field-label">Next</div><div class="field-val">◇</div></div>
+            </div>
+            <div class="diagram-link"></div>
+            <div class="diagram-node">
+              <div class="field"><div class="field-label">Prev</div><div class="field-val">◇</div></div>
+              <div class="field"><div class="field-label">Value</div><div class="field-val">93</div></div>
+              <div class="field"><div class="field-label">Next</div><div class="field-val">◇</div></div>
+            </div>
+            <div class="diagram-link"></div>
+            <span class="diagram-null">null</span>
+          </div>
+        </div>
+
+<div class="code-block">
+<div class="code-head"><span>Program.cs</span><button class="copy" data-copy="anatomy">Copy</button></div>
+<pre id="code-anatomy"><span class="tok-key">using</span> System.Collections.Generic;
+
+<span class="tok-key">var</span> chain = <span class="tok-key">new</span> <span class="tok-type">LinkedList</span>&lt;<span class="tok-key">int</span>&gt;([<span class="tok-num">42</span>, <span class="tok-num">17</span>, <span class="tok-num">93</span>]);     <span class="tok-com">// collection expression (C# 12+)</span>
+
+<span class="tok-type">LinkedListNode</span>&lt;<span class="tok-key">int</span>&gt; head = chain.First!;      <span class="tok-com">// Value = 42</span>
+<span class="tok-type">LinkedListNode</span>&lt;<span class="tok-key">int</span>&gt; tail = chain.Last!;       <span class="tok-com">// Value = 93</span>
+
+Console.WriteLine(head.Value);               <span class="tok-com">// 42</span>
+Console.WriteLine(head.Next!.Value);          <span class="tok-com">// 17</span>
+Console.WriteLine(tail.Previous!.Value);      <span class="tok-com">// 17</span>
+Console.WriteLine(head.Previous <span class="tok-key">is null</span>);     <span class="tok-com">// True — head has no predecessor</span></pre>
+</div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 03 PLAYGROUND ──────────────────────────── -->
+  <section id="playground">
+    <div class="section-header">
+      <div class="sigil">§ 03 / Laboratory</div>
+      <h2>Run the operations. Watch the <em>pointers</em> rewire.</h2>
+    </div>
+    <div class="section-body">
+      <div class="margin-note">
+        Every button below maps to a real method on <br>LinkedList&lt;T&gt;.
+      </div>
+      <div class="section-content">
+        <p>Add and remove nodes from either end, or search for a value. Each action logs the corresponding C# call and updates the visualisation in place. The <code class="inline">Head</code> tag marks <code class="inline">First</code>; the burnt-orange tag marks <code class="inline">Last</code>.</p>
+
+        <div class="playground">
+          <div class="playground-header">
+            <span>LINKED LIST · LIVE</span>
+            <div class="status">
+              <span>Count<b id="pg-count">0</b></span>
+              <span>First<b id="pg-first">null</b></span>
+              <span>Last<b id="pg-last">null</b></span>
+            </div>
+          </div>
+          <div class="playground-viz">
+            <div class="viz-list" id="viz-list">
+              <span class="viz-null">null</span>
+            </div>
+          </div>
+          <div class="playground-controls">
+            <div class="control-group">
+              <h4>Insert</h4>
+              <div class="control-row">
+                <input type="text" id="add-val" placeholder="value" value="10">
+                <button class="btn accent" onclick="llAddFirst()">AddFirst</button>
+                <button class="btn accent" onclick="llAddLast()">AddLast</button>
+              </div>
+            </div>
+            <div class="control-group">
+              <h4>Remove &amp; search</h4>
+              <div class="control-row">
+                <button class="btn" onclick="llRemoveFirst()">RemoveFirst</button>
+                <button class="btn" onclick="llRemoveLast()">RemoveLast</button>
+                <input type="text" id="find-val" placeholder="find" value="20">
+                <button class="btn" onclick="llFind()">Find</button>
+                <button class="btn ghost" onclick="llClear()">Clear</button>
+              </div>
+            </div>
+          </div>
+          <div class="playground-log" id="pg-log">
+            <div class="log-line"><span class="log-time">[00:00]</span><span class="log-op">READY</span> &mdash; new LinkedList&lt;int&gt;() instantiated.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 04 OPERATIONS ──────────────────────────── -->
+  <section id="operations">
+    <div class="section-header">
+      <div class="sigil">§ 04 / Operations</div>
+      <h2>Nine methods cover <em>almost everything</em> you need.</h2>
+    </div>
+    <div class="section-body">
+      <div class="margin-note">
+        Each tab pairs the method with its complexity. The constant-time operations are what justify using this structure at all.
+      </div>
+      <div class="section-content">
+        <p>Every method on <code class="inline">LinkedList&lt;T&gt;</code> can be categorised by whether it targets an end (<code class="inline">First</code>/<code class="inline">Last</code>), a specific node reference, or a value to be searched. Select a tab below to see the idiomatic usage.</p>
+
+        <div class="tabs">
+          <div class="tab-bar" id="tab-bar">
+            <button class="tab-btn active" data-tab="t1">AddFirst<span class="complexity">O(1)</span></button>
+            <button class="tab-btn" data-tab="t2">AddLast<span class="complexity">O(1)</span></button>
+            <button class="tab-btn" data-tab="t3">AddAfter<span class="complexity">O(1)</span></button>
+            <button class="tab-btn" data-tab="t4">Remove<span class="complexity">O(1)</span></button>
+            <button class="tab-btn" data-tab="t5">Find<span class="complexity">O(n)</span></button>
+            <button class="tab-btn" data-tab="t6">Traverse<span class="complexity">O(n)</span></button>
+          </div>
+
+          <div class="tab-panel active" id="t1">
+            <p>Prepends a value (or an existing detached node) before the current <code class="inline">First</code>. The new node becomes the head.</p>
+            <div class="code-block">
+              <div class="code-head"><span>AddFirst / prepend</span><button class="copy" data-copy="t1">Copy</button></div>
+<pre id="code-t1"><span class="tok-key">var</span> queue = <span class="tok-key">new</span> <span class="tok-type">LinkedList</span>&lt;<span class="tok-key">string</span>&gt;();
+queue.AddFirst(<span class="tok-str">"breaking"</span>);
+queue.AddFirst(<span class="tok-str">"urgent"</span>);   <span class="tok-com">// urgent → breaking</span>
+
+<span class="tok-com">// Returns the new node; use it if you need to reference it later</span>
+<span class="tok-type">LinkedListNode</span>&lt;<span class="tok-key">string</span>&gt; node = queue.AddFirst(<span class="tok-str">"hot"</span>);
+Console.WriteLine(node.Next!.Value);   <span class="tok-com">// "urgent"</span></pre>
+            </div>
+          </div>
+
+          <div class="tab-panel" id="t2">
+            <p>Appends to the tail. Paired with <code class="inline">AddFirst</code>, this lets you use a linked list as a double-ended queue (deque).</p>
+            <div class="code-block">
+              <div class="code-head"><span>AddLast / append</span><button class="copy" data-copy="t2">Copy</button></div>
+<pre id="code-t2"><span class="tok-key">var</span> log = <span class="tok-key">new</span> <span class="tok-type">LinkedList</span>&lt;<span class="tok-key">string</span>&gt;();
+log.AddLast(<span class="tok-str">"started"</span>);
+log.AddLast(<span class="tok-str">"loaded config"</span>);
+log.AddLast(<span class="tok-str">"ready"</span>);
+
+Console.WriteLine(log.Last!.Value);   <span class="tok-com">// "ready"</span>
+Console.WriteLine(log.Count);          <span class="tok-com">// 3</span></pre>
+            </div>
+          </div>
+
+          <div class="tab-panel" id="t3">
+            <p>Inserts immediately after a node you already hold. This is the operation where linked lists shine: no shifting, no reallocation — just two pointer assignments.</p>
+            <div class="code-block">
+              <div class="code-head"><span>AddAfter / AddBefore</span><button class="copy" data-copy="t3">Copy</button></div>
+<pre id="code-t3"><span class="tok-key">var</span> lineup = <span class="tok-key">new</span> <span class="tok-type">LinkedList</span>&lt;<span class="tok-key">string</span>&gt;([<span class="tok-str">"Alice"</span>, <span class="tok-str">"Carol"</span>]);
+
+<span class="tok-type">LinkedListNode</span>&lt;<span class="tok-key">string</span>&gt; alice = lineup.First!;
+lineup.AddAfter(alice, <span class="tok-str">"Bob"</span>);     <span class="tok-com">// Alice → Bob → Carol</span>
+
+<span class="tok-type">LinkedListNode</span>&lt;<span class="tok-key">string</span>&gt; carol = lineup.Last!;
+lineup.AddBefore(carol, <span class="tok-str">"Beth"</span>);   <span class="tok-com">// Alice → Bob → Beth → Carol</span></pre>
+            </div>
+          </div>
+
+          <div class="tab-panel" id="t4">
+            <p>Three overloads: remove by node reference (O(1)), remove by value (O(n), finds first match), or <code class="inline">RemoveFirst</code> / <code class="inline">RemoveLast</code> (O(1)).</p>
+            <div class="code-block">
+              <div class="code-head"><span>Remove variants</span><button class="copy" data-copy="t4">Copy</button></div>
+<pre id="code-t4"><span class="tok-key">var</span> tasks = <span class="tok-key">new</span> <span class="tok-type">LinkedList</span>&lt;<span class="tok-key">string</span>&gt;([<span class="tok-str">"lint"</span>, <span class="tok-str">"build"</span>, <span class="tok-str">"test"</span>, <span class="tok-str">"deploy"</span>]);
+
+<span class="tok-com">// O(1) — we already hold the node</span>
+<span class="tok-type">LinkedListNode</span>&lt;<span class="tok-key">string</span>&gt; lint = tasks.First!;
+tasks.Remove(lint);
+
+tasks.RemoveLast();                    <span class="tok-com">// O(1) — drops "deploy"</span>
+<span class="tok-key">bool</span> removed = tasks.Remove(<span class="tok-str">"test"</span>);   <span class="tok-com">// O(n) — scans for match</span></pre>
+            </div>
+          </div>
+
+          <div class="tab-panel" id="t5">
+            <p><code class="inline">Find</code> returns the first node whose <code class="inline">Value</code> equals the argument, or <code class="inline">null</code>. <code class="inline">FindLast</code> searches from the tail. Both are O(n).</p>
+            <div class="code-block">
+              <div class="code-head"><span>Find / FindLast</span><button class="copy" data-copy="t5">Copy</button></div>
+<pre id="code-t5"><span class="tok-key">var</span> names = <span class="tok-key">new</span> <span class="tok-type">LinkedList</span>&lt;<span class="tok-key">string</span>&gt;([<span class="tok-str">"Ada"</span>, <span class="tok-str">"Grace"</span>, <span class="tok-str">"Ada"</span>, <span class="tok-str">"Linus"</span>]);
+
+<span class="tok-type">LinkedListNode</span>&lt;<span class="tok-key">string</span>&gt;? first = names.Find(<span class="tok-str">"Ada"</span>);       <span class="tok-com">// index 0</span>
+<span class="tok-type">LinkedListNode</span>&lt;<span class="tok-key">string</span>&gt;? last  = names.FindLast(<span class="tok-str">"Ada"</span>);   <span class="tok-com">// index 2</span>
+
+<span class="tok-key">if</span> (first <span class="tok-key">is not null</span>)
+    names.AddAfter(first, <span class="tok-str">"Lovelace"</span>);     <span class="tok-com">// now O(1) — we hold the node</span></pre>
+            </div>
+          </div>
+
+          <div class="tab-panel" id="t6">
+            <p>No indexer is provided. Walk with <code class="inline">foreach</code> (which yields values) or by following <code class="inline">Next</code> pointers manually (which yields nodes).</p>
+            <div class="code-block">
+              <div class="code-head"><span>Traversal patterns</span><button class="copy" data-copy="t6">Copy</button></div>
+<pre id="code-t6"><span class="tok-key">var</span> chain = <span class="tok-key">new</span> <span class="tok-type">LinkedList</span>&lt;<span class="tok-key">int</span>&gt;([<span class="tok-num">1</span>, <span class="tok-num">2</span>, <span class="tok-num">3</span>, <span class="tok-num">4</span>, <span class="tok-num">5</span>]);
+
+<span class="tok-com">// Values only — simplest</span>
+<span class="tok-key">foreach</span> (<span class="tok-key">var</span> v <span class="tok-key">in</span> chain) Console.Write(v);
+
+<span class="tok-com">// Walk by nodes — lets you inspect Previous / Next</span>
+<span class="tok-key">for</span> (<span class="tok-key">var</span> n = chain.First; n <span class="tok-key">is not null</span>; n = n.Next)
+    Console.WriteLine($<span class="tok-str">"{n.Value} (prev: {n.Previous?.Value ?? -1})"</span>);
+
+<span class="tok-com">// Reverse traversal from tail</span>
+<span class="tok-key">for</span> (<span class="tok-key">var</span> n = chain.Last; n <span class="tok-key">is not null</span>; n = n.Previous)
+    Console.Write(n.Value);   <span class="tok-com">// 54321</span></pre>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 05 COMPLEXITY ──────────────────────────── -->
+  <section id="complexity">
+    <div class="section-header">
+      <div class="sigil">§ 05 / Complexity</div>
+      <h2>The numbers that earn this structure its <em>reputation</em>.</h2>
+    </div>
+    <div class="section-body">
+      <div class="margin-note">
+        Green = O(1)<br>
+        Yellow = O(log n)<br>
+        Red = O(n)<br>
+        Grey = unsupported
+      </div>
+      <div class="section-content">
+
+        <table class="matrix">
+          <thead>
+            <tr>
+              <th>Operation</th>
+              <th>LinkedList&lt;T&gt;</th>
+              <th>List&lt;T&gt;</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Access by index <code class="inline">[i]</code></td>
+              <td><span class="big-o no">n/a</span></td>
+              <td><span class="big-o good">O(1)</span></td>
+              <td>No indexer on LinkedList</td>
+            </tr>
+            <tr>
+              <td>Insert at head</td>
+              <td><span class="big-o good">O(1)</span></td>
+              <td><span class="big-o bad">O(n)</span></td>
+              <td>List shifts every element right</td>
+            </tr>
+            <tr>
+              <td>Insert at tail</td>
+              <td><span class="big-o good">O(1)</span></td>
+              <td><span class="big-o good">O(1)*</span></td>
+              <td>*amortised for List</td>
+            </tr>
+            <tr>
+              <td>Insert after known node</td>
+              <td><span class="big-o good">O(1)</span></td>
+              <td><span class="big-o bad">O(n)</span></td>
+              <td>The headline advantage</td>
+            </tr>
+            <tr>
+              <td>Remove by node</td>
+              <td><span class="big-o good">O(1)</span></td>
+              <td><span class="big-o bad">O(n)</span></td>
+              <td>List has no node concept</td>
+            </tr>
+            <tr>
+              <td>Remove by value</td>
+              <td><span class="big-o bad">O(n)</span></td>
+              <td><span class="big-o bad">O(n)</span></td>
+              <td>Both must search first</td>
+            </tr>
+            <tr>
+              <td>Search (linear)</td>
+              <td><span class="big-o bad">O(n)</span></td>
+              <td><span class="big-o bad">O(n)</span></td>
+              <td>Tied</td>
+            </tr>
+            <tr>
+              <td>Binary search</td>
+              <td><span class="big-o no">n/a</span></td>
+              <td><span class="big-o mid">O(log n)</span></td>
+              <td>Needs random access</td>
+            </tr>
+            <tr>
+              <td>Count</td>
+              <td><span class="big-o good">O(1)</span></td>
+              <td><span class="big-o good">O(1)</span></td>
+              <td>Cached property</td>
+            </tr>
+            <tr>
+              <td>Memory per element</td>
+              <td>~40 bytes</td>
+              <td>~4–8 bytes</td>
+              <td>Node objects + pointers</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout">
+          <div class="tag">Cache note</div>
+          Even when Big-O says LinkedList wins, real hardware often says otherwise. Modern CPUs prefetch contiguous memory aggressively, so a <code class="inline">List&lt;T&gt;</code>&#39;s O(n) shift over 1&nbsp;000 integers can still beat a LinkedList&#39;s O(1) insertion because of cache locality. Measure before optimising.
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 06 VS ──────────────────────────────────── -->
+  <section id="vs-list">
+    <div class="section-header">
+      <div class="sigil">§ 06 / Choosing</div>
+      <h2>When to pick one over the <em>other</em>.</h2>
+    </div>
+    <div class="section-body">
+      <div class="margin-note">
+        If you cannot answer &quot;why not List?&quot;, the answer is List.
+      </div>
+      <div class="section-content">
+
+        <div class="versus">
+          <div>
+            <h4>Pick</h4>
+            <h3>List&lt;T&gt;</h3>
+            <ul>
+              <li>You need index access (<code class="inline">list[i]</code>)</li>
+              <li>Most work happens at the tail</li>
+              <li>You iterate far more than you mutate</li>
+              <li>Memory or cache behaviour matters</li>
+              <li>You use LINQ, sorting, binary search</li>
+              <li>The default choice, 95% of the time</li>
+            </ul>
+          </div>
+          <div class="divider"></div>
+          <div>
+            <h4>Pick</h4>
+            <h3>LinkedList&lt;T&gt;</h3>
+            <ul>
+              <li>LRU caches (paired with a Dictionary)</li>
+              <li>Undo/redo stacks with arbitrary insertion</li>
+              <li>Playlist / queue with mid-sequence edits</li>
+              <li>You already hold node references</li>
+              <li>You need O(1) at both head and tail</li>
+              <li>Iterators must not be invalidated by inserts</li>
+            </ul>
+          </div>
+        </div>
+
+        <p>A canonical win for <code class="inline">LinkedList&lt;T&gt;</code> is the LRU (least-recently-used) cache. A dictionary maps keys to node references in O(1), and the linked list moves recently-touched nodes to the front in O(1). No other built-in collection gives you both.</p>
+
+<div class="code-block">
+<div class="code-head"><span>Sketch · LRU cache in ~20 lines</span><button class="copy" data-copy="lru">Copy</button></div>
+<pre id="code-lru"><span class="tok-key">public class</span> <span class="tok-type">LruCache</span>&lt;K, V&gt; <span class="tok-key">where</span> K : <span class="tok-key">notnull</span>
+{
+    <span class="tok-key">private readonly int</span> _capacity;
+    <span class="tok-key">private readonly</span> <span class="tok-type">LinkedList</span>&lt;(K key, V val)&gt; _order = <span class="tok-key">new</span>();
+    <span class="tok-key">private readonly</span> <span class="tok-type">Dictionary</span>&lt;K, <span class="tok-type">LinkedListNode</span>&lt;(K, V)&gt;&gt; _index = <span class="tok-key">new</span>();
+
+    <span class="tok-key">public</span> <span class="tok-type">LruCache</span>(<span class="tok-key">int</span> capacity) =&gt; _capacity = capacity;
+
+    <span class="tok-key">public</span> V? Get(K key)
+    {
+        <span class="tok-key">if</span> (!_index.TryGetValue(key, <span class="tok-key">out var</span> node)) <span class="tok-key">return default</span>;
+        _order.Remove(node);                 <span class="tok-com">// O(1)</span>
+        _order.AddFirst(node);               <span class="tok-com">// O(1) — touch</span>
+        <span class="tok-key">return</span> node.Value.val;
+    }
+
+    <span class="tok-key">public void</span> Set(K key, V val)
+    {
+        <span class="tok-key">if</span> (_index.TryGetValue(key, <span class="tok-key">out var</span> existing)) _order.Remove(existing);
+        <span class="tok-key">else if</span> (_order.Count == _capacity)
+        {
+            _index.Remove(_order.Last!.Value.key);
+            _order.RemoveLast();             <span class="tok-com">// O(1) — evict</span>
+        }
+        _index[key] = _order.AddFirst((key, val));
+    }
+}</pre>
+</div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 07 MODERN C# ───────────────────────────── -->
+  <section id="modern">
+    <div class="section-header">
+      <div class="sigil">§ 07 / Modern idioms</div>
+      <h2>What C# 14 &amp; .NET 10 bring to the <em>table</em>.</h2>
+    </div>
+    <div class="section-body">
+      <div class="margin-note">
+        Collection expressions and pattern matching make modern LinkedList code read almost like prose.
+      </div>
+      <div class="section-content">
+
+        <p>The LinkedList API itself is stable — .NET 10 has not changed its shape — but the surrounding language has. Collection expressions, <code class="inline">is not null</code> patterns, and extended property patterns all make calling code noticeably cleaner than the C# 5 era.</p>
+
+<div class="code-block">
+<div class="code-head"><span>Modern idioms · C# 14</span><button class="copy" data-copy="modern">Copy</button></div>
+<pre id="code-modern"><span class="tok-com">// ① Collection expressions — construct from literal</span>
+<span class="tok-type">LinkedList</span>&lt;<span class="tok-key">int</span>&gt; list = <span class="tok-key">new</span>([<span class="tok-num">1</span>, <span class="tok-num">2</span>, <span class="tok-num">3</span>, <span class="tok-num">4</span>, <span class="tok-num">5</span>]);
+
+<span class="tok-com">// ② Pattern matching on nullable node</span>
+<span class="tok-key">if</span> (list.Find(<span class="tok-num">3</span>) <span class="tok-key">is</span> { Value: <span class="tok-key">var</span> v, Next: { } next })
+    Console.WriteLine($<span class="tok-str">"Found {v}, next is {next.Value}"</span>);
+
+<span class="tok-com">// ③ Extension: materialise as array via LINQ</span>
+<span class="tok-key">int</span>[] snapshot = [.. list];           <span class="tok-com">// spread into an array</span>
+
+<span class="tok-com">// ④ Local functions over iterator state</span>
+<span class="tok-type">IEnumerable</span>&lt;<span class="tok-type">LinkedListNode</span>&lt;<span class="tok-key">int</span>&gt;&gt; Nodes(<span class="tok-type">LinkedList</span>&lt;<span class="tok-key">int</span>&gt; l)
+{
+    <span class="tok-key">for</span> (<span class="tok-key">var</span> n = l.First; n <span class="tok-key">is not null</span>; n = n.Next)
+        <span class="tok-key">yield return</span> n;
+}
+
+<span class="tok-key">foreach</span> (<span class="tok-key">var</span> node <span class="tok-key">in</span> Nodes(list).Where(n =&gt; n.Value % <span class="tok-num">2</span> == <span class="tok-num">0</span>))
+    Console.WriteLine(node.Value);         <span class="tok-com">// 2, 4</span>
+
+<span class="tok-com">// ⑤ Primary constructor on a wrapper (C# 12+)</span>
+<span class="tok-key">public class</span> <span class="tok-type">History</span>&lt;T&gt;(<span class="tok-key">int</span> max)
+{
+    <span class="tok-key">private readonly</span> <span class="tok-type">LinkedList</span>&lt;T&gt; _items = <span class="tok-key">new</span>();
+    <span class="tok-key">public void</span> Push(T item)
+    {
+        _items.AddFirst(item);
+        <span class="tok-key">if</span> (_items.Count &gt; max) _items.RemoveLast();
+    }
+}</pre>
+</div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 08 PITFALLS ────────────────────────────── -->
+  <section id="pitfalls">
+    <div class="section-header">
+      <div class="sigil">§ 08 / Pitfalls</div>
+      <h2>The rough edges that <em>cut newcomers</em>.</h2>
+    </div>
+    <div class="section-body">
+      <div class="margin-note">
+        Almost all of these disappear once you think of LinkedList as &quot;a sequence of node references&quot;, not &quot;an array with slower indexing&quot;.
+      </div>
+      <div class="section-content">
+
+        <div class="callout">
+          <div class="tag">Pitfall 01 — no indexer</div>
+          <code class="inline">list[i]</code> does not compile on <code class="inline">LinkedList&lt;T&gt;</code>. To get the <em>i</em>-th element you must traverse. If your code needs <code class="inline">[i]</code>, you almost certainly want <code class="inline">List&lt;T&gt;</code> instead.
+        </div>
+
+        <div class="callout">
+          <div class="tag">Pitfall 02 — a node belongs to one list</div>
+          A <code class="inline">LinkedListNode&lt;T&gt;</code> can belong to exactly one <code class="inline">LinkedList&lt;T&gt;</code> at a time. Trying to <code class="inline">AddFirst</code> a node that is still attached to another list throws <code class="inline">InvalidOperationException</code>. Remove it first, or use <code class="inline">AddFirst(node.Value)</code> to copy the value.
+        </div>
+
+        <div class="callout">
+          <div class="tag">Pitfall 03 — mutation during iteration</div>
+          <code class="inline">foreach</code> over a LinkedList throws if you modify the list during the loop — the same rule as List&lt;T&gt;. If you need to delete during traversal, walk manually with <code class="inline">Next</code> and capture the successor <em>before</em> removing.
+<div class="code-block">
+<div class="code-head"><span>Safe deletion during traversal</span><button class="copy" data-copy="safe-del">Copy</button></div>
+<pre id="code-safe-del"><span class="tok-key">var</span> n = list.First;
+<span class="tok-key">while</span> (n <span class="tok-key">is not null</span>)
+{
+    <span class="tok-key">var</span> next = n.Next;                  <span class="tok-com">// capture FIRST</span>
+    <span class="tok-key">if</span> (n.Value % <span class="tok-num">2</span> == <span class="tok-num">0</span>) list.Remove(n);
+    n = next;
+}</pre>
+</div>
+        </div>
+
+        <div class="callout">
+          <div class="tag">Pitfall 04 — null after the ends</div>
+          <code class="inline">First.Previous</code> and <code class="inline">Last.Next</code> are both <code class="inline">null</code>. Dereferencing them is an <code class="inline">NRE</code> waiting to happen. Use nullable-aware patterns (<code class="inline">is not null</code>, <code class="inline">?.</code>) systematically.
+        </div>
+
+        <div class="callout note">
+          <div class="tag">Note — not thread-safe</div>
+          Like every collection in <code class="inline">System.Collections.Generic</code>, <code class="inline">LinkedList&lt;T&gt;</code> is not thread-safe for writes. For concurrent scenarios reach for <code class="inline">ConcurrentQueue&lt;T&gt;</code>, <code class="inline">ConcurrentBag&lt;T&gt;</code>, or explicit locking.
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── FOOTER ─────────────────────────────────── -->
+  <footer>
+    <div>[ END OF MONOGRAPH ]</div>
+    <div class="colophon">
+      Set in <em>Instrument Serif</em> for display, <em>IBM Plex Sans</em> for body, and <em>IBM Plex Mono</em> for code. Compiled on .NET 10.0.200. All interactive elements implemented in vanilla JavaScript; no frameworks, no trackers, no build step.
+    </div>
+    <div>REV. 2026.04<br>FOLIO 08 / 08</div>
+  </footer>
+
+</div>
+
+<script>
+  /* ─── Tabs ─────────────────────────────────────── */
+  document.getElementById('tab-bar').addEventListener('click', e => {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    const id = btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === id));
+  });
+
+  /* ─── Copy buttons ─────────────────────────────── */
+  document.querySelectorAll('.copy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = document.getElementById('code-' + btn.dataset.copy);
+      if (!target) return;
+      const text = target.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'Copied';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1200);
+      });
+    });
+  });
+
+  /* ─── Linked-list playground ───────────────────── */
+  const LL = { values: [] };   // [{ id, value }]
+  let nextId = 1;
+
+  const vizEl   = document.getElementById('viz-list');
+  const countEl = document.getElementById('pg-count');
+  const firstEl = document.getElementById('pg-first');
+  const lastEl  = document.getElementById('pg-last');
+  const logEl   = document.getElementById('pg-log');
+
+  function render() {
+    vizEl.innerHTML = '';
+    if (LL.values.length === 0) {
+      const n = document.createElement('span');
+      n.className = 'viz-null';
+      n.textContent = 'null';
+      vizEl.appendChild(n);
+    } else {
+      const nl = document.createElement('span');
+      nl.className = 'viz-null';
+      nl.textContent = 'null';
+      vizEl.appendChild(nl);
+
+      LL.values.forEach((item, i) => {
+        if (i > 0) {
+          const link = document.createElement('div');
+          link.className = 'viz-link';
+          link.innerHTML = '<div class="arrow fwd"></div><div class="arrow bwd"></div>';
+          vizEl.appendChild(link);
+        } else {
+          const link = document.createElement('div');
+          link.className = 'viz-link';
+          link.innerHTML = '<div class="arrow fwd"></div>';
+          vizEl.appendChild(link);
+        }
+
+        const node = document.createElement('div');
+        node.className = 'viz-node';
+        if (i === 0) node.classList.add('head');
+        if (i === LL.values.length - 1 && LL.values.length > 1) node.classList.add('tail');
+        node.dataset.id = item.id;
+        node.innerHTML = `
+          <div class="viz-val">${escapeHtml(item.value)}</div>
+          <div class="viz-tag">${i === 0 ? 'HEAD' : (i === LL.values.length - 1 ? 'TAIL' : 'NODE · ' + i)}</div>`;
+        vizEl.appendChild(node);
+      });
+
+      const trailLink = document.createElement('div');
+      trailLink.className = 'viz-link';
+      trailLink.innerHTML = '<div class="arrow fwd"></div>';
+      vizEl.appendChild(trailLink);
+
+      const nr = document.createElement('span');
+      nr.className = 'viz-null';
+      nr.textContent = 'null';
+      vizEl.appendChild(nr);
+    }
+
+    countEl.textContent = LL.values.length;
+    firstEl.textContent = LL.values[0]?.value ?? 'null';
+    lastEl.textContent  = LL.values[LL.values.length - 1]?.value ?? 'null';
+  }
+
+  function log(op, msg, isErr = false) {
+    const time = new Date().toTimeString().slice(0, 5);
+    const line = document.createElement('div');
+    line.className = 'log-line';
+    line.innerHTML = `<span class="log-time">[${time}]</span><span class="log-op ${isErr ? 'log-err' : ''}">${op}</span> &mdash; ${msg}`;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+    while (logEl.children.length > 30) logEl.removeChild(logEl.firstChild);
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function readInput(id) {
+    const v = document.getElementById(id).value.trim();
+    if (!v) return null;
+    return isNaN(Number(v)) ? v : Number(v);
+  }
+
+  window.llAddFirst = () => {
+    const v = readInput('add-val');
+    if (v === null) return log('ERROR', 'enter a value first', true);
+    LL.values.unshift({ id: nextId++, value: v });
+    render();
+    log('AddFirst', `list.AddFirst(${JSON.stringify(v)}) &mdash; O(1)`);
+  };
+
+  window.llAddLast = () => {
+    const v = readInput('add-val');
+    if (v === null) return log('ERROR', 'enter a value first', true);
+    LL.values.push({ id: nextId++, value: v });
+    render();
+    log('AddLast', `list.AddLast(${JSON.stringify(v)}) &mdash; O(1)`);
+  };
+
+  window.llRemoveFirst = () => {
+    if (LL.values.length === 0) return log('ERROR', 'list is empty, cannot RemoveFirst', true);
+    const removed = LL.values.shift();
+    render();
+    log('RemoveFirst', `dropped ${JSON.stringify(removed.value)} &mdash; O(1)`);
+  };
+
+  window.llRemoveLast = () => {
+    if (LL.values.length === 0) return log('ERROR', 'list is empty, cannot RemoveLast', true);
+    const removed = LL.values.pop();
+    render();
+    log('RemoveLast', `dropped ${JSON.stringify(removed.value)} &mdash; O(1)`);
+  };
+
+  window.llFind = () => {
+    const v = readInput('find-val');
+    if (v === null) return log('ERROR', 'enter a value to find', true);
+    const idx = LL.values.findIndex(x => String(x.value) === String(v));
+    document.querySelectorAll('.viz-node.found').forEach(n => n.classList.remove('found'));
+    if (idx === -1) {
+      log('Find', `list.Find(${JSON.stringify(v)}) returned null &mdash; O(n)`, true);
+    } else {
+      const item = LL.values[idx];
+      const el = vizEl.querySelector(`.viz-node[data-id="${item.id}"]`);
+      if (el) {
+        el.classList.add('found');
+        setTimeout(() => el.classList.remove('found'), 2500);
+      }
+      log('Find', `returned node at position ${idx} &mdash; O(n), ${idx + 1} step${idx === 0 ? '' : 's'}`);
+    }
+  };
+
+  window.llClear = () => {
+    LL.values = [];
+    render();
+    log('Clear', 'list.Clear() &mdash; O(n) GC release');
+  };
+
+  // Seed with a couple of items so the playground isn't empty
+  LL.values = [
+    { id: nextId++, value: 10 },
+    { id: nextId++, value: 20 },
+    { id: nextId++, value: 30 },
+  ];
+  render();
+</script>
+
+</body>
+</html>
