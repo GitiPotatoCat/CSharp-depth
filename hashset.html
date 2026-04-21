@@ -1,0 +1,1719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HashSet&lt;T&gt; &mdash; C# Data Structures</title>
+<meta name="description" content="Interactive technical reference for HashSet<T> in C# 14 / .NET 10 with an animated dual-set Venn diagram for union, intersect, except, and symmetric difference.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:         #0F172A;
+    --surface:    #111827;
+    --surface-2:  #0b1220;
+    --surface-3:  #161f33;
+    --border:     #1F2933;
+    --border-2:   #2a3441;
+
+    --text:       #E5E7EB;
+    --text-2:     #9CA3AF;
+    --text-3:     #6b7280;
+
+    --blue:       #2563EB;
+    --blue-soft:  rgba(37, 99, 235, 0.12);
+    --cyan:       #22D3EE;
+    --cyan-soft:  rgba(34, 211, 238, 0.12);
+    --amber:      #F59E0B;
+    --amber-soft: rgba(245, 158, 11, 0.12);
+    --emerald:    #10B981;
+    --emerald-soft: rgba(16, 185, 129, 0.12);
+    --red:        #EF4444;
+    --red-soft:   rgba(239, 68, 68, 0.12);
+
+    --sans: "IBM Plex Sans", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, monospace;
+    --head: "Inter", system-ui, sans-serif;
+
+    --radius:     12px;
+    --radius-sm:  6px;
+    --max-w:      1280px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-weight: 400;
+    font-size: 15px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(37, 99, 235, 0.06) 0%, transparent 40%),
+      radial-gradient(circle at 85% 40%, rgba(34, 211, 238, 0.04) 0%, transparent 40%),
+      radial-gradient(circle, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 24px 24px;
+  }
+  ::selection { background: var(--blue); color: white; }
+
+  .wrap { max-width: var(--max-w); margin: 0 auto; padding: 0 32px; }
+
+  /* ─── Top nav ──────────────────────────────── */
+  .topnav {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .topnav-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px; padding: 0 32px;
+    max-width: var(--max-w); margin: 0 auto;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 12px;
+    font-family: var(--head); font-weight: 700;
+    font-size: 15px; letter-spacing: -0.01em;
+    color: var(--text); text-decoration: none;
+  }
+  .brand-mark {
+    width: 28px; height: 28px; display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--blue), var(--cyan));
+    border-radius: 6px;
+    font-family: var(--mono); font-weight: 600; font-size: 13px; color: white;
+  }
+  .brand-sep { width: 1px; height: 16px; background: var(--border-2); margin: 0 4px; }
+  .brand-tag { font-family: var(--mono); font-size: 12px; color: var(--text-2); }
+  .back-link {
+    font-family: var(--sans); font-size: 13px; color: var(--text-2);
+    text-decoration: none; padding: 7px 12px; border-radius: var(--radius-sm);
+    transition: all 0.15s;
+  }
+  .back-link:hover { color: var(--text); background: var(--border); }
+
+  /* ─── Breadcrumb ─────────────────────────── */
+  .crumb {
+    padding: 24px 0 0; font-family: var(--mono); font-size: 11px;
+    color: var(--text-3); letter-spacing: 0.12em; text-transform: uppercase;
+  }
+  .crumb a { color: var(--text-2); text-decoration: none; }
+  .crumb a:hover { color: var(--cyan); }
+  .crumb .sep { margin: 0 8px; color: var(--border-2); }
+
+  /* ─── Article header ─────────────────────── */
+  .article-header { padding: 24px 0 48px; border-bottom: 1px solid var(--border); }
+  .module-tag {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.15em;
+    text-transform: uppercase; padding: 6px 12px;
+    border: 1px solid var(--blue); background: var(--blue-soft);
+    color: var(--cyan); border-radius: 100px; margin-bottom: 20px;
+  }
+  .module-tag .mdot {
+    width: 6px; height: 6px; background: var(--cyan); border-radius: 50%;
+    box-shadow: 0 0 10px var(--cyan); animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(1.3); } }
+
+  .article-header h1 {
+    font-family: var(--head); font-weight: 800;
+    font-size: clamp(40px, 6vw, 72px); line-height: 1.02;
+    letter-spacing: -0.03em; color: var(--text); margin-bottom: 20px;
+  }
+  .article-header h1 .generic { color: var(--text-3); font-weight: 600; }
+
+  .article-sub {
+    font-family: var(--sans); font-size: 18px; line-height: 1.6;
+    color: var(--text-2); max-width: 720px; margin-bottom: 32px;
+  }
+  .article-sub code {
+    font-family: var(--mono); font-size: 0.9em;
+    color: var(--cyan); background: var(--cyan-soft);
+    padding: 2px 8px; border-radius: 4px;
+  }
+
+  .meta-row {
+    display: flex; flex-wrap: wrap; gap: 0;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden; background: var(--surface); max-width: 800px;
+  }
+  .meta-cell { flex: 1 1 140px; padding: 14px 18px; border-right: 1px solid var(--border); }
+  .meta-cell:last-child { border-right: none; }
+  .meta-cell .label {
+    display: block; font-family: var(--mono); font-size: 10px;
+    color: var(--text-3); letter-spacing: 0.12em; text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .meta-cell .value { font-family: var(--sans); font-size: 14px; font-weight: 600; color: var(--text); }
+
+  /* ─── Layout ─────────────────────────────── */
+  .layout { display: grid; grid-template-columns: 220px 1fr; gap: 64px; padding: 48px 0; }
+  aside.toc {
+    position: sticky; top: 80px; align-self: start;
+    max-height: calc(100vh - 100px); overflow-y: auto; padding-right: 10px;
+  }
+  aside.toc .toc-label {
+    font-family: var(--mono); font-size: 10px; color: var(--text-3);
+    letter-spacing: 0.15em; text-transform: uppercase;
+    margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+  aside.toc ol { list-style: none; counter-reset: toc; }
+  aside.toc ol li { counter-increment: toc; border-left: 1px solid var(--border); }
+  aside.toc ol li a {
+    display: flex; align-items: baseline; gap: 10px;
+    padding: 8px 0 8px 14px; font-family: var(--sans); font-size: 13px;
+    color: var(--text-2); text-decoration: none;
+    margin-left: -1px; border-left: 1px solid transparent;
+    transition: all 0.15s;
+  }
+  aside.toc ol li a::before {
+    content: counter(toc, decimal-leading-zero);
+    font-family: var(--mono); font-size: 10px; color: var(--text-3); letter-spacing: 0.1em;
+  }
+  aside.toc ol li a:hover { color: var(--text); }
+  aside.toc ol li a.active { color: var(--cyan); border-left-color: var(--cyan); }
+  aside.toc ol li a.active::before { color: var(--cyan); }
+
+  .content { max-width: 820px; min-width: 0; }
+
+  /* ─── Sections ───────────────────────────── */
+  section { padding: 48px 0; scroll-margin-top: 80px; }
+  section + section { border-top: 1px solid var(--border); }
+  section h2 {
+    font-family: var(--head); font-weight: 700; font-size: 32px;
+    line-height: 1.15; letter-spacing: -0.02em; color: var(--text);
+    margin-bottom: 16px; display: flex; align-items: baseline; gap: 14px;
+  }
+  section h2 .sec-num {
+    font-family: var(--mono); font-size: 12px; color: var(--cyan);
+    font-weight: 400; letter-spacing: 0.15em;
+  }
+  section h3 {
+    font-family: var(--head); font-weight: 700; font-size: 20px;
+    letter-spacing: -0.01em; color: var(--text); margin: 28px 0 12px;
+  }
+  .content p {
+    font-family: var(--sans); font-size: 15px; line-height: 1.7;
+    color: var(--text-2); margin-bottom: 18px;
+  }
+  .content p strong { color: var(--text); font-weight: 600; }
+
+  code.inline {
+    font-family: var(--mono); font-size: 0.9em;
+    color: var(--cyan); background: var(--cyan-soft);
+    padding: 2px 7px; border-radius: 4px;
+    border: 1px solid rgba(34, 211, 238, 0.15);
+  }
+  code.inline.api {
+    color: var(--blue); background: var(--blue-soft);
+    border-color: rgba(37, 99, 235, 0.2);
+  }
+
+  /* ─── Code blocks ─────────────────────────── */
+  .code-block {
+    margin: 20px 0; border: 1px solid var(--border);
+    background: var(--surface-2); border-radius: var(--radius-sm); overflow: hidden;
+  }
+  .code-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--border);
+    font-family: var(--mono); font-size: 11px; color: var(--text-3);
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .code-head .filename { display: inline-flex; align-items: center; gap: 8px; }
+  .code-head .filename::before { content: ''; width: 6px; height: 6px; background: var(--emerald); border-radius: 50%; }
+  .copy-btn {
+    font-family: var(--mono); font-size: 10px; background: transparent;
+    border: 1px solid var(--border-2); color: var(--text-3);
+    padding: 4px 10px; border-radius: 4px; cursor: pointer;
+    transition: all 0.15s; letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .copy-btn:hover { color: var(--text); border-color: var(--text-2); }
+  .copy-btn.copied { color: var(--emerald); border-color: var(--emerald); }
+  .code-block pre {
+    padding: 18px 20px; overflow-x: auto;
+    font-family: var(--mono); font-size: 13px; line-height: 1.65; color: var(--text);
+  }
+  .tok-key { color: #c792ea; }
+  .tok-type { color: #22D3EE; }
+  .tok-str { color: #A5E6A5; }
+  .tok-num { color: #F59E0B; }
+  .tok-com { color: #6b7280; font-style: italic; }
+  .tok-fn { color: #82AAFF; }
+
+  /* ─── Tabs ───────────────────────────────── */
+  .tabs {
+    margin: 24px 0; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); background: var(--surface); overflow: hidden;
+  }
+  .tab-bar { display: flex; background: var(--surface-2); border-bottom: 1px solid var(--border); overflow-x: auto; }
+  .tab-btn {
+    flex-shrink: 0; padding: 12px 18px;
+    background: transparent; border: none; border-right: 1px solid var(--border);
+    font-family: var(--mono); font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    cursor: pointer; color: var(--text-3); transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .tab-btn:hover { color: var(--text-2); background: var(--surface-3); }
+  .tab-btn.active {
+    background: var(--surface); color: var(--cyan);
+    border-bottom: 2px solid var(--cyan); margin-bottom: -1px;
+  }
+  .tab-btn .bigo {
+    font-size: 9px; padding: 1px 6px; border-radius: 3px;
+    background: var(--border); color: var(--text-2);
+  }
+  .tab-btn.active .bigo { background: var(--cyan-soft); color: var(--cyan); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .tab-panel .code-block { margin: 0; border: none; border-radius: 0; }
+  .tab-panel .panel-intro { padding: 16px 20px 0; font-size: 14px; color: var(--text-2); }
+
+  /* ─── Callouts ──────────────────────────── */
+  .callout {
+    margin: 24px 0; padding: 16px 20px; border-radius: var(--radius-sm);
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid;
+  }
+  .callout .tag {
+    font-family: var(--mono); font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.15em;
+    display: inline-flex; align-items: center; gap: 6px; margin-bottom: 6px;
+  }
+  .callout .tag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .callout p { font-size: 14px; margin: 0; color: var(--text-2); }
+  .callout p + p { margin-top: 8px; }
+  .callout p strong { color: var(--text); }
+  .callout.pitfall { border-left-color: var(--amber);   background: linear-gradient(to right, var(--amber-soft), transparent 40%), var(--surface); }
+  .callout.pitfall .tag { color: var(--amber); }
+  .callout.perf    { border-left-color: var(--cyan);    background: linear-gradient(to right, var(--cyan-soft), transparent 40%), var(--surface); }
+  .callout.perf .tag { color: var(--cyan); }
+  .callout.best    { border-left-color: var(--emerald); background: linear-gradient(to right, var(--emerald-soft), transparent 40%), var(--surface); }
+  .callout.best .tag { color: var(--emerald); }
+  .callout.danger  { border-left-color: var(--red);     background: linear-gradient(to right, var(--red-soft), transparent 40%), var(--surface); }
+  .callout.danger .tag { color: var(--red); }
+  .callout.api     { border-left-color: var(--blue);    background: linear-gradient(to right, var(--blue-soft), transparent 40%), var(--surface); }
+  .callout.api .tag { color: var(--blue); }
+
+  /* ─── Uniqueness anatomy ─────────────────── */
+  .anatomy {
+    margin: 28px 0; padding: 32px 24px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); position: relative;
+  }
+  .anatomy::before {
+    content: 'FIG · UNIQUENESS ENFORCEMENT';
+    position: absolute; top: 12px; right: 16px;
+    font-family: var(--mono); font-size: 9px; color: var(--text-3);
+    letter-spacing: 0.15em;
+  }
+
+  .uniqueness-demo {
+    display: flex; align-items: center; justify-content: center;
+    flex-wrap: wrap; gap: 16px; margin-top: 24px;
+  }
+  .unique-stream {
+    display: flex; align-items: center; gap: 8px;
+    flex-wrap: wrap;
+  }
+  .unique-chip {
+    padding: 8px 14px;
+    font-family: var(--mono); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border-2); background: var(--surface-2);
+    color: var(--text-2); border-radius: 5px;
+  }
+  .unique-chip.first { color: var(--emerald); border-color: var(--emerald); background: var(--emerald-soft); }
+  .unique-chip.dupe  {
+    color: var(--amber); border-color: var(--amber); background: var(--amber-soft);
+    text-decoration: line-through;
+    position: relative;
+  }
+  .unique-chip.dupe::after {
+    content: 'rejected';
+    position: absolute; top: -16px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px; color: var(--amber); text-decoration: none;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .unique-arrow { color: var(--text-3); font-family: var(--mono); }
+  .unique-result {
+    padding: 10px 16px; border: 1px solid var(--emerald);
+    background: var(--emerald-soft); color: var(--emerald);
+    border-radius: var(--radius-sm); font-family: var(--mono);
+    font-size: 13px; font-weight: 600;
+  }
+
+  /* ─── Venn diagram playground ────────────── */
+  .playground {
+    margin: 28px 0; border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden; background: var(--surface);
+  }
+  .pg-head {
+    background: linear-gradient(to right, var(--surface-2), var(--surface));
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .pg-title {
+    font-family: var(--head); font-weight: 700; font-size: 14px; color: var(--text);
+    display: inline-flex; align-items: center; gap: 10px;
+  }
+  .pg-title .pg-mark {
+    width: 22px; height: 22px; display: grid; place-items: center;
+    background: var(--cyan-soft); color: var(--cyan); border-radius: 4px;
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+  }
+  .pg-stats { display: flex; gap: 14px; font-family: var(--mono); font-size: 12px; flex-wrap: wrap; }
+  .pg-stat { color: var(--text-3); }
+  .pg-stat b { color: var(--text); font-weight: 600; margin-left: 4px; }
+  .pg-stat.a b { color: var(--emerald); }
+  .pg-stat.b b { color: var(--blue); }
+  .pg-stat.both b { color: var(--cyan); }
+
+  /* Venn container */
+  .venn-container {
+    position: relative;
+    width: 100%;
+    height: 340px;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(34, 211, 238, 0.03) 0%, transparent 60%),
+      repeating-linear-gradient(0deg, transparent 0, transparent 23px, var(--border) 23px, var(--border) 24px),
+      repeating-linear-gradient(90deg, transparent 0, transparent 23px, var(--border) 23px, var(--border) 24px),
+      var(--surface-2);
+    overflow: hidden;
+  }
+
+  .venn-svg {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+
+  .venn-circle {
+    fill-opacity: 0.08;
+    stroke-width: 2;
+    transition: fill-opacity 0.4s, stroke-width 0.3s;
+  }
+  .venn-circle.circle-a { fill: var(--emerald); stroke: var(--emerald); }
+  .venn-circle.circle-b { fill: var(--blue); stroke: var(--blue); }
+  .venn-circle.highlight-full { fill-opacity: 0.22; stroke-width: 3; }
+  .venn-circle.dim { fill-opacity: 0.03; stroke-dasharray: 4 4; }
+
+  .venn-label {
+    font-family: var(--head);
+    font-weight: 800;
+    font-size: 42px;
+    fill: var(--text-3);
+    transition: fill 0.3s, opacity 0.3s;
+  }
+  .venn-label.label-a { fill: var(--emerald); }
+  .venn-label.label-b { fill: var(--blue); }
+  .venn-label.dim { opacity: 0.3; }
+
+  /* Item chips positioned inside regions */
+  .venn-grid {
+    position: absolute; inset: 0;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr 1.1fr;
+    padding: 40px 20px 40px 20px;
+    pointer-events: none;
+  }
+
+  .venn-region {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-content: center;
+    justify-content: center;
+    padding: 10px;
+    transition: opacity 0.4s;
+    pointer-events: auto;
+  }
+  .venn-region.a-only { justify-content: flex-start; padding-left: 40px; }
+  .venn-region.both   { justify-content: center; }
+  .venn-region.b-only { justify-content: flex-end; padding-right: 40px; }
+  .venn-region.dim { opacity: 0.22; }
+
+  /* Region labels (corner tags) */
+  .region-tag {
+    position: absolute;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    padding: 3px 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    z-index: 3;
+  }
+  .region-tag.a-only { top: 10px; left: 16px; color: var(--emerald); border-color: rgba(16, 185, 129, 0.3); }
+  .region-tag.b-only { top: 10px; right: 16px; color: var(--blue); border-color: rgba(37, 99, 235, 0.3); }
+  .region-tag.both   { bottom: 10px; left: 50%; transform: translateX(-50%); color: var(--cyan); border-color: rgba(34, 211, 238, 0.3); }
+
+  /* Item chips */
+  .set-chip {
+    padding: 6px 12px;
+    font-family: var(--mono); font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border-2); background: var(--surface);
+    color: var(--text);
+    border-radius: 5px;
+    position: relative;
+    z-index: 2;
+    animation: chipEnter 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+    transition: border-color 0.3s, background 0.3s, color 0.3s, transform 0.3s, box-shadow 0.3s;
+    cursor: default;
+  }
+  @keyframes chipEnter {
+    0%   { opacity: 0; transform: translateY(-10px) scale(0.7); }
+    60%  { opacity: 1; transform: translateY(2px) scale(1.05); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .set-chip.exiting { animation: chipExit 0.4s ease-in forwards; }
+  @keyframes chipExit {
+    0%   { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.6) translateY(-8px); }
+  }
+
+  .venn-region.a-only .set-chip { border-color: var(--emerald); color: var(--emerald); background: var(--emerald-soft); }
+  .venn-region.both   .set-chip { border-color: var(--cyan); color: var(--cyan); background: var(--cyan-soft); }
+  .venn-region.b-only .set-chip { border-color: var(--blue); color: var(--blue); background: var(--blue-soft); }
+
+  /* Operation selection highlight */
+  .set-chip.selected {
+    transform: translateY(-3px) scale(1.08);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25), 0 6px 18px rgba(16, 185, 129, 0.35);
+    z-index: 5;
+  }
+  .set-chip.removing {
+    animation: chipDissolve 0.6s ease-in forwards;
+  }
+  @keyframes chipDissolve {
+    0%   { opacity: 1; transform: scale(1); border-color: var(--red); color: var(--red); }
+    50%  { opacity: 0.5; transform: scale(0.9); background: var(--red-soft); border-color: var(--red); color: var(--red); }
+    100% { opacity: 0; transform: scale(0.6); }
+  }
+  .set-chip.newly-added {
+    animation: chipEnter 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.3), newGlow 1s ease-out;
+  }
+  @keyframes newGlow {
+    0%   { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.45); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  }
+  .set-chip.duplicate-rejected {
+    animation: dupShake 0.5s;
+    border-color: var(--amber) !important; color: var(--amber) !important; background: var(--amber-soft) !important;
+  }
+  @keyframes dupShake {
+    0%, 100% { transform: translateX(0); }
+    25%      { transform: translateX(-5px); }
+    75%      { transform: translateX(5px); }
+  }
+
+  .venn-empty {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--mono); font-size: 12px;
+    color: var(--text-3); font-style: italic;
+    pointer-events: none;
+  }
+
+  /* Operation banner */
+  .op-banner {
+    position: absolute;
+    top: 12px; left: 50%;
+    transform: translate(-50%, -100%);
+    padding: 8px 18px;
+    background: var(--surface);
+    border: 1px solid var(--emerald);
+    border-radius: 100px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--emerald);
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+    transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+    z-index: 6;
+    white-space: nowrap;
+  }
+  .op-banner.show { transform: translate(-50%, 0); }
+  .op-banner b { color: var(--text); font-weight: 600; }
+
+  /* Controls */
+  .pg-controls {
+    padding: 16px 20px; border-top: 1px solid var(--border);
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    background: var(--surface);
+  }
+  .ctrl-group {
+    display: flex; gap: 6px; align-items: center;
+    padding: 4px 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+  }
+  .ctrl-group.a { border-color: rgba(16, 185, 129, 0.25); }
+  .ctrl-group.b { border-color: rgba(37, 99, 235, 0.25); }
+  .ctrl-group .sname {
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    padding: 0 4px;
+  }
+  .ctrl-group.a .sname { color: var(--emerald); }
+  .ctrl-group.b .sname { color: var(--blue); }
+
+  .pg-controls .label {
+    font-family: var(--mono); font-size: 10px; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.1em; margin-right: 4px;
+  }
+  .pg-sep { width: 1px; height: 22px; background: var(--border); margin: 0 6px; }
+
+  .pg-input {
+    font-family: var(--mono); font-size: 12px; padding: 5px 10px;
+    border: 1px solid var(--border-2); background: var(--surface);
+    color: var(--text); border-radius: var(--radius-sm); width: 90px;
+  }
+  .pg-input:focus { outline: none; border-color: var(--cyan); }
+
+  .btn {
+    font-family: var(--sans); font-size: 13px; font-weight: 500;
+    padding: 6px 12px; border: 1px solid var(--border-2);
+    background: var(--surface-2); color: var(--text);
+    border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:hover:not(:disabled) { border-color: var(--cyan); color: var(--cyan); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.tiny { padding: 5px 10px; font-size: 12px; }
+  .btn.emerald { background: var(--emerald); border-color: var(--emerald); color: var(--bg); font-weight: 600; }
+  .btn.emerald:hover:not(:disabled) { background: #0d9668; border-color: #0d9668; color: var(--bg); }
+  .btn.primary { background: var(--blue); border-color: var(--blue); color: white; }
+  .btn.primary:hover:not(:disabled) { background: #1e50c7; border-color: #1e50c7; color: white; }
+  .btn.amber { border-color: rgba(245, 158, 11, 0.4); color: var(--amber); }
+  .btn.amber:hover:not(:disabled) { border-color: var(--amber); background: var(--amber-soft); color: var(--amber); }
+  .btn.danger { border-color: var(--red-soft); color: var(--red); }
+  .btn.danger:hover:not(:disabled) { border-color: var(--red); background: var(--red-soft); color: var(--red); }
+
+  /* Set operation row */
+  .set-ops {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--surface-2);
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+  }
+  .set-ops-label {
+    font-family: var(--mono); font-size: 10px; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.12em;
+    padding-right: 8px; border-right: 1px solid var(--border);
+    margin-right: 4px;
+  }
+  .op-btn {
+    font-family: var(--mono); font-size: 12px;
+    padding: 7px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border-2);
+    color: var(--text);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .op-btn:hover:not(:disabled) {
+    border-color: var(--emerald);
+    color: var(--emerald);
+    background: var(--emerald-soft);
+  }
+  .op-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .op-btn .sym {
+    margin-right: 6px; color: var(--emerald); font-weight: 700;
+  }
+
+  .pg-log {
+    background: var(--surface-2); border-top: 1px solid var(--border);
+    font-family: var(--mono); font-size: 12px;
+    padding: 14px 20px; max-height: 110px; overflow-y: auto;
+  }
+  .pg-log-line { padding: 2px 0; color: var(--text-2); }
+  .pg-log-line .time { color: var(--text-3); margin-right: 10px; }
+  .pg-log-line .op { color: var(--cyan); font-weight: 600; }
+  .pg-log-line.add .op { color: var(--emerald); }
+  .pg-log-line.set-op .op { color: var(--amber); }
+  .pg-log-line.del .op { color: var(--blue); }
+  .pg-log-line.error .op { color: var(--red); }
+
+  /* ─── Matrix ─────────────────────────────── */
+  .matrix {
+    width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 14px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); overflow: hidden;
+  }
+  .matrix th, .matrix td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+  .matrix thead th {
+    background: var(--surface-2); font-family: var(--mono); font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.12em; font-weight: 500; color: var(--text-2);
+  }
+  .matrix tbody td { font-family: var(--sans); font-size: 13px; color: var(--text-2); }
+  .matrix tbody td:first-child { color: var(--text); font-weight: 500; }
+  .matrix tbody tr:last-child td { border-bottom: none; }
+  .matrix tbody tr:hover { background: var(--surface-2); }
+
+  .big-o {
+    display: inline-block; padding: 2px 8px;
+    font-family: var(--mono); font-weight: 600; border-radius: 3px; font-size: 12px;
+  }
+  .big-o.good { background: var(--emerald-soft); color: var(--emerald); }
+  .big-o.mid  { background: var(--cyan-soft); color: var(--cyan); }
+  .big-o.bad  { background: var(--amber-soft); color: var(--amber); }
+  .big-o.no   { background: var(--border); color: var(--text-3); font-style: italic; }
+
+  /* ─── Decision cards ─────────────────────── */
+  .decision-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 28px 0; }
+  .dcard {
+    padding: 24px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); position: relative; overflow: hidden;
+  }
+  .dcard::before { content: ''; position: absolute; top: 0; left: 0; width: 48px; height: 2px; }
+  .dcard.a::before { background: var(--emerald); }
+  .dcard.b::before { background: var(--cyan); }
+  .dcard h4 {
+    font-family: var(--head); font-weight: 700; font-size: 18px; margin-bottom: 6px;
+    color: var(--text); display: flex; align-items: center; gap: 10px;
+  }
+  .dcard h4 code { font-family: var(--mono); font-size: 16px; color: var(--cyan); font-weight: 600; }
+  .dcard .sub {
+    font-family: var(--mono); font-size: 10px; text-transform: uppercase;
+    letter-spacing: 0.15em; color: var(--text-3); margin-bottom: 16px;
+  }
+  .dcard ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .dcard li {
+    font-family: var(--sans); font-size: 14px; color: var(--text-2);
+    padding-left: 20px; position: relative; line-height: 1.55;
+  }
+  .dcard.a li::before { content: '+'; color: var(--emerald); font-weight: 700; position: absolute; left: 0; }
+  .dcard.b li::before { content: '+'; color: var(--cyan);    font-weight: 700; position: absolute; left: 0; }
+
+  /* ─── Back to library CTA (final module) ── */
+  .back-to-library {
+    margin: 48px 0; padding: 32px;
+    background: linear-gradient(135deg, var(--surface), var(--surface-2));
+    border: 1px solid var(--border); border-radius: var(--radius);
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 20px; text-decoration: none; color: inherit;
+    transition: all 0.2s; position: relative; overflow: hidden;
+  }
+  .back-to-library:hover { border-color: var(--cyan); transform: translateY(-2px); }
+  .back-to-library::after {
+    content: ''; position: absolute; top: -50%; left: -10%;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, var(--cyan-soft) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .back-to-library .label {
+    font-family: var(--mono); font-size: 11px; color: var(--emerald);
+    text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 6px;
+  }
+  .back-to-library h3 {
+    font-family: var(--head); font-weight: 700; font-size: 24px;
+    color: var(--text); margin-bottom: 4px; letter-spacing: -0.01em;
+  }
+  .back-to-library p { font-size: 14px; color: var(--text-2); margin: 0; }
+  .back-to-library .arrow {
+    font-family: var(--mono); font-size: 28px; color: var(--cyan);
+    transition: transform 0.2s; flex-shrink: 0;
+  }
+  .back-to-library:hover .arrow { transform: translateX(-6px); }
+
+  footer { padding: 40px 0; border-top: 1px solid var(--border); }
+  footer .footer-inner {
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 20px;
+    font-family: var(--mono); font-size: 11px; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.12em;
+  }
+  footer .v { color: var(--text-2); }
+  footer a { color: inherit; text-decoration: none; transition: color 0.15s; }
+  footer a:hover { color: var(--cyan); }
+
+  /* ─── Responsive ─────────────────────────── */
+  @media (max-width: 980px) {
+    .layout { grid-template-columns: 1fr; gap: 0; }
+    aside.toc { display: none; }
+  }
+  @media (max-width: 768px) {
+    .wrap { padding: 0 20px; }
+    .topnav-inner { padding: 0 20px; }
+    .brand-tag { display: none; }
+    .article-header h1 { font-size: 36px; }
+    .decision-grid { grid-template-columns: 1fr; }
+    .pg-head { flex-direction: column; align-items: flex-start; }
+    .pg-stats { width: 100%; justify-content: flex-start; }
+    .back-to-library { flex-direction: column; text-align: left; align-items: flex-start; }
+    .venn-container { height: 400px; }
+    .venn-grid { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr 1fr; padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── TOP NAV ────────────────────────────────── -->
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a href="index.html" class="brand">
+      <span class="brand-mark">C#</span>
+      <span>Data Structures</span>
+      <span class="brand-sep"></span>
+      <span class="brand-tag">.NET 10 &middot; C# 14</span>
+    </a>
+    <a href="index.html" class="back-link">&larr; Back to library</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <!-- ─── CRUMB ──────────────────────────────────── -->
+  <div class="crumb">
+    <a href="index.html">Library</a>
+    <span class="sep">/</span>
+    <span>Hash</span>
+    <span class="sep">/</span>
+    <span>HashSet</span>
+  </div>
+
+  <!-- ─── ARTICLE HEADER ─────────────────────────── -->
+  <header class="article-header">
+    <div class="module-tag">
+      <span class="mdot"></span>
+      MODULE 06 &middot; HASH &middot; SET
+    </div>
+    <h1>HashSet<span class="generic">&lt;T&gt;</span></h1>
+    <p class="article-sub">
+      Dictionary without the values. Uniqueness, membership testing, and the algebra of sets
+      &mdash; union, intersection, difference, symmetric difference &mdash; all backed by the
+      same hash table that makes <code>Dictionary</code> fast. The quietest, most reusable
+      collection in the BCL.
+    </p>
+
+    <div class="meta-row">
+      <div class="meta-cell"><span class="label">Runtime</span><span class="value">.NET 10.0.200</span></div>
+      <div class="meta-cell"><span class="label">Language</span><span class="value">C# 14</span></div>
+      <div class="meta-cell"><span class="label">Reading time</span><span class="value">~14 min</span></div>
+      <div class="meta-cell"><span class="label">Level</span><span class="value">Intermediate</span></div>
+    </div>
+  </header>
+
+  <!-- ─── LAYOUT ─────────────────────────────────── -->
+  <div class="layout">
+
+    <aside class="toc">
+      <div class="toc-label">On this page</div>
+      <ol>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#anatomy">Uniqueness anatomy</a></li>
+        <li><a href="#playground">Venn playground</a></li>
+        <li><a href="#operations">Core operations</a></li>
+        <li><a href="#set-algebra">Set algebra</a></li>
+        <li><a href="#complexity">Complexity matrix</a></li>
+        <li><a href="#choose">When to choose</a></li>
+        <li><a href="#modern">Modern C# 14</a></li>
+        <li><a href="#pitfalls">Pitfalls</a></li>
+      </ol>
+    </aside>
+
+    <div class="content">
+
+      <!-- ═══ 01 OVERVIEW ═══ -->
+      <section id="overview">
+        <h2><span class="sec-num">01</span>Overview</h2>
+        <p>
+          A <code class="inline">HashSet&lt;T&gt;</code> is a collection of <em>unique</em>
+          elements. That&#39;s the whole premise: you can <code class="inline">Add</code> an
+          item, and if it&#39;s already there the call silently returns
+          <code class="inline">false</code> and changes nothing. Membership testing is
+          expected <code class="inline">O(1)</code> &mdash; the same hash-table magic that
+          powers <code class="inline">Dictionary&lt;TKey, TValue&gt;</code>, just without
+          the values.
+        </p>
+        <p>
+          Any time you catch yourself writing <code class="inline">if (!list.Contains(x)) list.Add(x)</code>,
+          stop &mdash; that pattern is a <code class="inline">HashSet&lt;T&gt;</code> wearing
+          a costume. The cost goes from <code class="inline">O(n)</code> per duplicate check
+          on a list to <code class="inline">O(1)</code> on a set, and the intent of
+          &ldquo;no duplicates&rdquo; becomes declarative instead of procedural.
+        </p>
+
+        <div class="callout api">
+          <div class="tag">Namespace</div>
+          <p>
+            <code class="inline api">HashSet&lt;T&gt;</code> lives in
+            <code class="inline api">System.Collections.Generic</code>. It implements
+            <code class="inline">ISet&lt;T&gt;</code> and <code class="inline">IReadOnlySet&lt;T&gt;</code>.
+            For concurrent, thread-safe use:
+            <code class="inline api">ConcurrentDictionary&lt;T, byte&gt;</code> (there&#39;s
+            no built-in <code class="inline">ConcurrentHashSet</code> in .NET). For immutable,
+            read-optimised: <code class="inline api">FrozenSet&lt;T&gt;</code> (.NET 8+).
+          </p>
+        </div>
+      </section>
+
+      <!-- ═══ 02 ANATOMY ═══ -->
+      <section id="anatomy">
+        <h2><span class="sec-num">02</span>Uniqueness anatomy</h2>
+        <p>
+          Every item that arrives is hashed, bucketed, and compared against what&#39;s already
+          there. Duplicates are silently dropped. The order items <em>entered</em> is not
+          remembered &mdash; enumeration order is unspecified, though in practice modern .NET
+          preserves insertion order.
+        </p>
+
+        <div class="anatomy">
+          <div class="uniqueness-demo">
+            <div class="unique-stream">
+              <span class="unique-chip first">apple</span>
+              <span class="unique-arrow">&rarr;</span>
+              <span class="unique-chip first">banana</span>
+              <span class="unique-arrow">&rarr;</span>
+              <span class="unique-chip dupe">apple</span>
+              <span class="unique-arrow">&rarr;</span>
+              <span class="unique-chip first">cherry</span>
+              <span class="unique-arrow">&rarr;</span>
+              <span class="unique-chip dupe">banana</span>
+            </div>
+            <div class="unique-arrow">&rArr;</div>
+            <div class="unique-result">{ apple, banana, cherry }</div>
+          </div>
+        </div>
+
+        <div class="code-block">
+          <div class="code-head">
+            <span class="filename">Program.cs &middot; deduplicating a stream</span>
+            <button class="copy-btn" data-copy="anatomy">Copy</button>
+          </div>
+<pre id="code-anatomy"><span class="tok-key">using</span> System.Collections.Generic;
+
+<span class="tok-key">string</span>[] stream = [<span class="tok-str">"apple"</span>, <span class="tok-str">"banana"</span>, <span class="tok-str">"apple"</span>, <span class="tok-str">"cherry"</span>, <span class="tok-str">"banana"</span>];
+<span class="tok-key">var</span> seen = <span class="tok-key">new</span> <span class="tok-type">HashSet</span>&lt;<span class="tok-key">string</span>&gt;();
+
+<span class="tok-key">foreach</span> (<span class="tok-key">var</span> word <span class="tok-key">in</span> stream)
+{
+    <span class="tok-com">// Add returns false if the item was already present</span>
+    <span class="tok-key">if</span> (seen.<span class="tok-fn">Add</span>(word))
+        <span class="tok-type">Console</span>.<span class="tok-fn">WriteLine</span>($<span class="tok-str">"first occurrence: {word}"</span>);
+}
+
+<span class="tok-type">Console</span>.<span class="tok-fn">WriteLine</span>(seen.Count);               <span class="tok-com">// 3</span>
+<span class="tok-type">Console</span>.<span class="tok-fn">WriteLine</span>(seen.<span class="tok-fn">Contains</span>(<span class="tok-str">"apple"</span>));    <span class="tok-com">// True — O(1) avg</span></pre>
+        </div>
+      </section>
+
+      <!-- ═══ 03 PLAYGROUND ═══ -->
+      <section id="playground">
+        <h2><span class="sec-num">03</span>Venn playground</h2>
+        <p>
+          Two live <code class="inline">HashSet&lt;string&gt;</code> instances rendered as a
+          Venn diagram. Emerald is set <strong>A</strong>, blue is set <strong>B</strong>,
+          cyan is the intersection. Click a set operation to see which elements the
+          operation selects &mdash; and which are <em>removed</em> when the operation
+          mutates <strong>A</strong>.
+        </p>
+
+        <div class="playground">
+          <div class="pg-head">
+            <span class="pg-title">
+              <span class="pg-mark">&#8745;</span>
+              HashSet&lt;string&gt; &middot; A &amp; B
+            </span>
+            <div class="pg-stats">
+              <span class="pg-stat a">|A|<b id="pg-a-count">0</b></span>
+              <span class="pg-stat b">|B|<b id="pg-b-count">0</b></span>
+              <span class="pg-stat both">|A&#8745;B|<b id="pg-both-count">0</b></span>
+              <span class="pg-stat">|A&#8746;B|<b id="pg-union-count">0</b></span>
+            </div>
+          </div>
+
+          <div class="venn-container" id="venn-container">
+            <svg class="venn-svg" viewBox="0 0 700 340" preserveAspectRatio="xMidYMid meet">
+              <circle class="venn-circle circle-a" id="circle-a" cx="260" cy="170" r="155"/>
+              <circle class="venn-circle circle-b" id="circle-b" cx="440" cy="170" r="155"/>
+              <text class="venn-label label-a" id="label-a" x="140" y="50">A</text>
+              <text class="venn-label label-b" id="label-b" x="540" y="50">B</text>
+            </svg>
+
+            <span class="region-tag a-only">A only</span>
+            <span class="region-tag both">A &#8745; B</span>
+            <span class="region-tag b-only">B only</span>
+
+            <div class="venn-grid" id="venn-grid">
+              <div class="venn-region a-only" id="region-a-only"></div>
+              <div class="venn-region both" id="region-both"></div>
+              <div class="venn-region b-only" id="region-b-only"></div>
+            </div>
+
+            <div class="op-banner" id="op-banner"></div>
+          </div>
+
+          <div class="pg-controls">
+            <div class="ctrl-group a">
+              <span class="sname">A</span>
+              <input type="text" class="pg-input" id="a-input" placeholder="add to A" value="date">
+              <button class="btn tiny emerald" onclick="setAdd('A')">Add</button>
+              <button class="btn tiny" onclick="setRemove('A')">Remove</button>
+              <button class="btn tiny" onclick="setContains('A')">Contains</button>
+            </div>
+            <div class="ctrl-group b">
+              <span class="sname">B</span>
+              <input type="text" class="pg-input" id="b-input" placeholder="add to B" value="fig">
+              <button class="btn tiny primary" onclick="setAdd('B')">Add</button>
+              <button class="btn tiny" onclick="setRemove('B')">Remove</button>
+              <button class="btn tiny" onclick="setContains('B')">Contains</button>
+            </div>
+
+            <span class="pg-sep"></span>
+
+            <button class="btn tiny" onclick="loadSample()">Load sample</button>
+            <button class="btn tiny" onclick="swapSets()">Swap A &#8596; B</button>
+            <button class="btn tiny danger" onclick="resetAll()">Reset</button>
+          </div>
+
+          <div class="set-ops">
+            <span class="set-ops-label">Apply to A</span>
+            <button class="op-btn" onclick="runOp('union')">
+              <span class="sym">&#8746;</span>A.UnionWith(B)
+            </button>
+            <button class="op-btn" onclick="runOp('intersect')">
+              <span class="sym">&#8745;</span>A.IntersectWith(B)
+            </button>
+            <button class="op-btn" onclick="runOp('except')">
+              <span class="sym">&minus;</span>A.ExceptWith(B)
+            </button>
+            <button class="op-btn" onclick="runOp('symmetric')">
+              <span class="sym">&#8710;</span>A.SymmetricExceptWith(B)
+            </button>
+          </div>
+
+          <div class="pg-log" id="pg-log">
+            <div class="pg-log-line"><span class="time">[ready]</span><span class="op">INIT</span> &mdash; two empty HashSet&lt;string&gt; instances. Click <b>Load sample</b> to begin.</div>
+          </div>
+        </div>
+
+        <div class="callout perf">
+          <div class="tag">What to watch for</div>
+          <p>
+            Press <strong>Load sample</strong> to populate both sets. Then try each set
+            operation. Watch the <em>selected</em> items glow emerald, <em>removed</em>
+            items dissolve red, and <em>newly added</em> items flash in with the same
+            emerald pulse you saw in the Dictionary module. Every <code class="inline">A.*With(B)</code>
+            method mutates <strong>A</strong> in place &mdash; <strong>B</strong> is never
+            touched.
+          </p>
+        </div>
+      </section>
+
+      <!-- ═══ 04 OPERATIONS ═══ -->
+      <section id="operations">
+        <h2><span class="sec-num">04</span>Core operations</h2>
+        <p>
+          Five methods handle practically every non-set-algebra use. For read-only checks,
+          <code class="inline">Contains</code> is <em>the</em> operation you&#39;ll reach
+          for most.
+        </p>
+
+        <div class="tabs">
+          <div class="tab-bar" id="ops-tabs">
+            <button class="tab-btn active" data-tab="o1">Add <span class="bigo">O(1)</span></button>
+            <button class="tab-btn" data-tab="o2">Contains <span class="bigo">O(1)</span></button>
+            <button class="tab-btn" data-tab="o3">Remove <span class="bigo">O(1)</span></button>
+            <button class="tab-btn" data-tab="o4">TryGetValue <span class="bigo">O(1)</span></button>
+            <button class="tab-btn" data-tab="o5">Enumeration <span class="bigo">O(n)</span></button>
+          </div>
+
+          <div class="tab-panel active" id="o1">
+            <p class="panel-intro">Returns <code class="inline">true</code> if the item was new, <code class="inline">false</code> if it was already present. Unlike <code class="inline">Dictionary.Add</code>, it never throws on duplicates.</p>
+            <div class="code-block">
+              <div class="code-head"><span class="filename">Add — dedup-friendly</span><button class="copy-btn" data-copy="o1">Copy</button></div>
+<pre id="code-o1"><span class="tok-key">var</span> emails = <span class="tok-key">new</span> <span class="tok-type">HashSet</span>&lt;<span class="tok-key">string</span>&gt;(<span class="tok-type">StringComparer</span>.OrdinalIgnoreCase);
+
+emails.<span class="tok-fn">Add</span>(<span class="tok-str">"ada@example.com"</span>);       <span class="tok-com">// true  — new</span>
+emails.<span class="tok-fn">Add</span>(<span class="tok-str">"grace@example.com"</span>);     <span class="tok-com">// true  — new</span>
+emails.<span class="tok-fn">Add</span>(<span class="tok-str">"ADA@example.com"</span>);       <span class="tok-com">// false — case-insensitive dupe</span>
+
+<span class="tok-type">Console</span>.<span class="tok-fn">WriteLine</span>(emails.Count);         <span class="tok-com">// 2</span></pre>
+            </div>
+          </div>
+
+          <div class="tab-panel" id="o2">
+            <p class="panel-intro">The signature HashSet operation. If your code does membership checks in a loop, this is the method that makes it fast.</p>
+            <div class="code-block">
+              <div class="code-head"><span class="filename">Contains — O(1) membership</span><button class="copy-btn" data-copy="o2">Copy</button></div>
+<pre id="code-o2"><span class="tok-key">var</span> banned = <span class="tok-key">new</span> <span class="tok-type">HashSet</span>&lt;<span class="tok-key">string</span>&gt; { <span class="tok-str">"spam"</span>, <span class="tok-str">"bot"</span>, <span class="tok-str">"abuse"</span> };
+
+<span class="tok-key">foreach</span> (<span class="tok-key">var</span> comment <span class="tok-key">in</span> comments)
+    <span class="tok-key">if</span> (banned.<span class="tok-fn">Contains</span>(comment.Category))    <span class="tok-com">// O(1) avg</span>
+        <span class="tok-fn">Hide</span>(comment);
+
+<span class="tok-com">// Compare: list.Contains(...) would be O(n) PER comment → O(n×m)</span>
+<span class="tok-com">// HashSet.Contains(...) is O(1) PER comment → O(m) total</span></pre>
+            </div>
+          </div>
+
+          <div class="tab-panel" id="o3">
+            <p class="panel-intro">Returns <code class="inline">true</code> if the item was present and removed, <code class="inline">false</code> otherwise. Never throws.</p>
+            <div class="code-block">
+              <div class="code-head"><span class="filename">Remove</span><button class="copy-btn" data-copy="o3">Copy</button></div>
+<pre id="code-o3"><span class="tok-key">var</span> active = <span class="tok-key">new</span> <span class="tok-type">HashSet</span>&lt;<span class="tok-key">int</span>&gt; { <span class="tok-num">101</span>, <span class="tok-num">102</span>, <span class="tok-num">103</span> };
+
+<span class="tok-key">bool</span> removed = active.<span class="tok-fn">Remove</span>(<span class="tok-num">102</span>);    <span class="tok-com">// true</span>
+<span class="tok-key">bool</span> again   = active.<span class="tok-fn">Remove</span>(<span class="tok-num">102</span>);    <span class="tok-com">// false — not there any more</span>
+
+<span class="tok-type">Console</span>.<span class="tok-fn">WriteLine</span>(active.Count);       <span class="tok-com">// 2</span>
+
+<span class="tok-com">// RemoveWhere for bulk conditional removal</span>
+<span class="tok-key">int</span> dropped = active.<span class="tok-fn">RemoveWhere</span>(x =&gt; x &gt; <span class="tok-num">102</span>);   <span class="tok-com">// 1</span></pre>
+            </div>
+          </div>
+
+          <div class="tab-panel" id="o4">
+            <p class="panel-intro">A subtle method. For reference-type keys, different instances can be <em>equal</em> yet distinct. <code class="inline">TryGetValue</code> retrieves the <em>stored</em> instance, which you can then use as a canonical reference.</p>
+            <div class="code-block">
+              <div class="code-head"><span class="filename">TryGetValue — canonicalisation trick</span><button class="copy-btn" data-copy="o4">Copy</button></div>
+<pre id="code-o4"><span class="tok-key">var</span> interns = <span class="tok-key">new</span> <span class="tok-type">HashSet</span>&lt;<span class="tok-key">string</span>&gt;();
+
+<span class="tok-key">string</span> <span class="tok-fn">Intern</span>(<span class="tok-key">string</span> s)
+{
+    <span class="tok-com">// Return the existing instance if we've seen this string before</span>
+    <span class="tok-key">if</span> (interns.<span class="tok-fn">TryGetValue</span>(s, <span class="tok-key">out var</span> canonical))
+        <span class="tok-key">return</span> canonical;
+    interns.<span class="tok-fn">Add</span>(s);
+    <span class="tok-key">return</span> s;
+}
+
+<span class="tok-com">// Now a and b share the SAME reference, not just equal strings</span>
+<span class="tok-key">var</span> a = <span class="tok-fn">Intern</span>(<span class="tok-str">"hello"</span>);
+<span class="tok-key">var</span> b = <span class="tok-fn">Intern</span>(<span class="tok-str">"hello"</span>);
+<span class="tok-type">Console</span>.<span class="tok-fn">WriteLine</span>(<span class="tok-type">ReferenceEquals</span>(a, b));  <span class="tok-com">// True</span></pre>
+            </div>
+          </div>
+
+          <div class="tab-panel" id="o5">
+            <p class="panel-intro">Walk every element. Order is undocumented &mdash; do not rely on it. For sorted iteration, use <code class="inline">SortedSet&lt;T&gt;</code> instead.</p>
+            <div class="code-block">
+              <div class="code-head"><span class="filename">foreach / LINQ</span><button class="copy-btn" data-copy="o5">Copy</button></div>
+<pre id="code-o5"><span class="tok-key">var</span> tags = <span class="tok-key">new</span> <span class="tok-type">HashSet</span>&lt;<span class="tok-key">string</span>&gt; { <span class="tok-str">"csharp"</span>, <span class="tok-str">"dotnet"</span>, <span class="tok-str">"data"</span> };
+
+<span class="tok-key">foreach</span> (<span class="tok-key">var</span> t <span class="tok-key">in</span> tags)
+    <span class="tok-type">Console</span>.<span class="tok-fn">WriteLine</span>(t);            <span class="tok-com">// order not guaranteed</span>
+
+<span class="tok-com">// Need sorted output? Two good options:</span>
+<span class="tok-key">foreach</span> (<span class="tok-key">var</span> t <span class="tok-key">in</span> tags.<span class="tok-fn">OrderBy</span>(x =&gt; x))   <span class="tok-com">// ad-hoc</span>
+    <span class="tok-type">Console</span>.<span class="tok-fn">WriteLine</span>(t);
+
+<span class="tok-key">var</span> sorted = <span class="tok-key">new</span> <span class="tok-type">SortedSet</span>&lt;<span class="tok-key">string</span>&gt;(tags);    <span class="tok-com">// permanent</span></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ 05 SET ALGEBRA ═══ -->
+      <section id="set-algebra">
+        <h2><span class="sec-num">05</span>Set algebra</h2>
+        <p>
+          Four mutating set operations. Each modifies the calling set in place; none touches
+          the argument. If you need non-mutating versions, LINQ&#39;s
+          <code class="inline">Union</code>, <code class="inline">Intersect</code>, and
+          <code class="inline">Except</code> return new sequences rather than modifying
+          either source.
+        </p>
+
+        <div class="code-block">
+          <div class="code-head">
+            <span class="filename">The four methods &middot; what each keeps</span>
+            <button class="copy-btn" data-copy="algebra">Copy</button>
+          </div>
+<pre id="code-algebra"><span class="tok-key">var</span> a = <span class="tok-key">new</span> <span class="tok-type">HashSet</span>&lt;<span class="tok-key">int</span>&gt; { <span class="tok-num">1</span>, <span class="tok-num">2</span>, <span class="tok-num">3</span>, <span class="tok-num">4</span> };
+<span class="tok-key">var</span> b = <span class="tok-key">new</span> <span class="tok-type">HashSet</span>&lt;<span class="tok-key">int</span>&gt; { <span class="tok-num">3</span>, <span class="tok-num">4</span>, <span class="tok-num">5</span>, <span class="tok-num">6</span> };
+
+<span class="tok-com">// ① UnionWith — A ← A ∪ B  — keep everything from either</span>
+<span class="tok-com">// a → {1, 2, 3, 4, 5, 6}</span>
+a.<span class="tok-fn">UnionWith</span>(b);
+
+<span class="tok-com">// ② IntersectWith — A ← A ∩ B  — keep only items present in both</span>
+<span class="tok-com">// a → {3, 4}</span>
+a.<span class="tok-fn">IntersectWith</span>(b);
+
+<span class="tok-com">// ③ ExceptWith — A ← A − B  — keep only items NOT in B</span>
+<span class="tok-com">// a → {1, 2}</span>
+a.<span class="tok-fn">ExceptWith</span>(b);
+
+<span class="tok-com">// ④ SymmetricExceptWith — A ← A △ B  — keep items in exactly one set</span>
+<span class="tok-com">// a → {1, 2, 5, 6}</span>
+a.<span class="tok-fn">SymmetricExceptWith</span>(b);</pre>
+        </div>
+
+        <p>There are also five <em>predicate</em> methods that answer questions without modifying anything:</p>
+
+        <div class="code-block">
+          <div class="code-head">
+            <span class="filename">Five set-relationship checks</span>
+            <button class="copy-btn" data-copy="predicates">Copy</button>
+          </div>
+<pre id="code-predicates"><span class="tok-key">var</span> vowels = <span class="tok-key">new</span> <span class="tok-type">HashSet</span>&lt;<span class="tok-key">char</span>&gt; { <span class="tok-str">'a'</span>, <span class="tok-str">'e'</span>, <span class="tok-str">'i'</span>, <span class="tok-str">'o'</span>, <span class="tok-str">'u'</span> };
+<span class="tok-key">var</span> letters = <span class="tok-key">new</span> <span class="tok-type">HashSet</span>&lt;<span class="tok-key">char</span>&gt; { <span class="tok-str">'a'</span>, <span class="tok-str">'e'</span>, <span class="tok-str">'i'</span>, <span class="tok-str">'o'</span>, <span class="tok-str">'u'</span>, <span class="tok-str">'b'</span>, <span class="tok-str">'c'</span> };
+
+vowels.<span class="tok-fn">IsSubsetOf</span>(letters);       <span class="tok-com">// true  — every vowel is in letters</span>
+vowels.<span class="tok-fn">IsProperSubsetOf</span>(letters); <span class="tok-com">// true  — and letters has more</span>
+letters.<span class="tok-fn">IsSupersetOf</span>(vowels);    <span class="tok-com">// true  — mirror of above</span>
+vowels.<span class="tok-fn">Overlaps</span>(letters);        <span class="tok-com">// true  — at least one common</span>
+vowels.<span class="tok-fn">SetEquals</span>(letters);       <span class="tok-com">// false — different sizes</span></pre>
+        </div>
+      </section>
+
+      <!-- ═══ 06 COMPLEXITY ═══ -->
+      <section id="complexity">
+        <h2><span class="sec-num">06</span>Complexity matrix</h2>
+
+        <table class="matrix">
+          <thead>
+            <tr><th>Operation</th><th>Average</th><th>Worst case</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Add</td>             <td><span class="big-o good">O(1)</span></td><td><span class="big-o bad">O(n)</span></td><td>May trigger rehash</td></tr>
+            <tr><td>Contains</td>        <td><span class="big-o good">O(1)</span></td><td><span class="big-o bad">O(n)</span></td><td>The reason to use HashSet</td></tr>
+            <tr><td>Remove</td>          <td><span class="big-o good">O(1)</span></td><td><span class="big-o bad">O(n)</span></td><td>Hash then unlink</td></tr>
+            <tr><td>TryGetValue</td>     <td><span class="big-o good">O(1)</span></td><td><span class="big-o bad">O(n)</span></td><td>Retrieves stored instance</td></tr>
+            <tr><td>UnionWith(B)</td>          <td><span class="big-o bad">O(m)</span></td><td><span class="big-o bad">O(m)</span></td><td>m = size of B</td></tr>
+            <tr><td>IntersectWith(B)</td>      <td><span class="big-o bad">O(n)</span></td><td><span class="big-o bad">O(n&middot;m)</span></td><td>n = size of A</td></tr>
+            <tr><td>ExceptWith(B)</td>         <td><span class="big-o bad">O(m)</span></td><td><span class="big-o bad">O(m)</span></td><td>Iterate B, remove from A</td></tr>
+            <tr><td>IsSubsetOf / IsSupersetOf</td><td><span class="big-o bad">O(n)</span></td><td><span class="big-o bad">O(n)</span></td><td>Fast path if counts differ</td></tr>
+            <tr><td>Count</td>           <td><span class="big-o good">O(1)</span></td><td><span class="big-o good">O(1)</span></td><td>Cached</td></tr>
+            <tr><td>Enumeration</td>     <td><span class="big-o bad">O(n)</span></td><td><span class="big-o bad">O(n)</span></td><td>Order undocumented</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout perf">
+          <div class="tag">The payoff</div>
+          <p>
+            A nested-loop deduplication with <code class="inline">List.Contains</code> is
+            <code class="inline">O(n&sup2;)</code>. The same algorithm with
+            <code class="inline">HashSet.Contains</code> is
+            <code class="inline">O(n)</code>. On 10,000 items that&#39;s the difference between
+            10,000 operations and 100,000,000. This is why
+            <code class="inline">HashSet&lt;T&gt;</code> is one of the most impactful
+            single-line refactors you can apply to slow code.
+          </p>
+        </div>
+      </section>
+
+      <!-- ═══ 07 CHOOSE ═══ -->
+      <section id="choose">
+        <h2><span class="sec-num">07</span>When to choose which</h2>
+        <p>
+          <code class="inline">HashSet&lt;T&gt;</code> shines when you need uniqueness or
+          fast membership. The decision is usually between it and one of its specialised
+          cousins.
+        </p>
+
+        <div class="decision-grid">
+          <div class="dcard a">
+            <h4>Pick <code>HashSet&lt;T&gt;</code></h4>
+            <div class="sub">Uniqueness &middot; membership</div>
+            <ul>
+              <li>Deduplicating a stream of items</li>
+              <li>&ldquo;Have I seen this already?&rdquo; in a loop</li>
+              <li>Tracking visited nodes in graph algorithms (BFS/DFS)</li>
+              <li>Tag clouds, permission sets, enabled flags</li>
+              <li>Pairing with <code class="inline">Queue&lt;T&gt;</code> to dedup in BFS</li>
+              <li>Anywhere you wrote <code class="inline">list.Distinct().ToList()</code></li>
+            </ul>
+          </div>
+          <div class="dcard b">
+            <h4>Pick a specialised variant</h4>
+            <div class="sub">Same shape &middot; different trade-offs</div>
+            <ul>
+              <li><code class="inline">SortedSet&lt;T&gt;</code> &mdash; ordered iteration, <code class="inline">O(log n)</code></li>
+              <li><code class="inline">FrozenSet&lt;T&gt;</code> &mdash; immutable, fastest reads (.NET 8+)</li>
+              <li><code class="inline">ImmutableHashSet&lt;T&gt;</code> &mdash; persistent, structural sharing</li>
+              <li><code class="inline">Dictionary&lt;TKey, TValue&gt;</code> &mdash; if values matter too</li>
+              <li><code class="inline">ConcurrentDictionary&lt;T, byte&gt;</code> &mdash; closest to a thread-safe set</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout best">
+          <div class="tag">The most common refactor</div>
+          <p>
+            If your code contains <code class="inline">if (!list.Contains(x)) list.Add(x)</code>
+            or <code class="inline">items.Distinct().ToList()</code>, change the collection
+            to <code class="inline">HashSet&lt;T&gt;</code>. You&#39;ll lose indexed access
+            (<code class="inline">list[i]</code>) and insertion-order guarantees, but most
+            code that checks membership doesn&#39;t need either. The speedup is often
+            dramatic.
+          </p>
+        </div>
+      </section>
+
+      <!-- ═══ 08 MODERN ═══ -->
+      <section id="modern">
+        <h2><span class="sec-num">08</span>Modern C# 14 idioms</h2>
+        <p>
+          Collection expressions, <code class="inline">FrozenSet</code>, and pattern-matched
+          <code class="inline">TryGetValue</code> have all reshaped what idiomatic set code
+          looks like in .NET 10.
+        </p>
+
+        <div class="code-block">
+          <div class="code-head">
+            <span class="filename">Modern idioms &middot; C# 14 on .NET 10</span>
+            <button class="copy-btn" data-copy="modern">Copy</button>
+          </div>
+<pre id="code-modern"><span class="tok-com">// ① Collection expressions — duplicates silently dropped</span>
+<span class="tok-type">HashSet</span>&lt;<span class="tok-key">int</span>&gt; odds = [<span class="tok-num">1</span>, <span class="tok-num">3</span>, <span class="tok-num">5</span>, <span class="tok-num">3</span>, <span class="tok-num">1</span>];
+<span class="tok-com">// odds.Count == 3  — {1, 3, 5}</span>
+
+<span class="tok-com">// ② Spread to combine — union without mutating</span>
+<span class="tok-type">HashSet</span>&lt;<span class="tok-key">int</span>&gt; primes = [<span class="tok-num">2</span>, <span class="tok-num">3</span>, <span class="tok-num">5</span>];
+<span class="tok-type">HashSet</span>&lt;<span class="tok-key">int</span>&gt; evens  = [<span class="tok-num">2</span>, <span class="tok-num">4</span>, <span class="tok-num">6</span>];
+<span class="tok-type">HashSet</span>&lt;<span class="tok-key">int</span>&gt; combined = [.. primes, .. evens];  <span class="tok-com">// {2, 3, 4, 5, 6}</span>
+
+<span class="tok-com">// ③ FrozenSet — build once, check many (.NET 8+)</span>
+<span class="tok-key">using</span> System.Collections.Frozen;
+
+<span class="tok-type">FrozenSet</span>&lt;<span class="tok-key">string</span>&gt; reserved = <span class="tok-key">new</span>[]
+{
+    <span class="tok-str">"class"</span>, <span class="tok-str">"struct"</span>, <span class="tok-str">"record"</span>, <span class="tok-str">"interface"</span>,
+    <span class="tok-str">"namespace"</span>, <span class="tok-str">"using"</span>, <span class="tok-str">"void"</span>, <span class="tok-str">"static"</span>
+}.<span class="tok-fn">ToFrozenSet</span>();
+
+<span class="tok-key">bool</span> isKeyword = reserved.<span class="tok-fn">Contains</span>(token);  <span class="tok-com">// ~30% faster than HashSet</span>
+
+<span class="tok-com">// ④ TryGetValue for canonical instance (string interning, etc.)</span>
+<span class="tok-key">if</span> (<span class="tok-key">interns</span>.<span class="tok-fn">TryGetValue</span>(candidate, <span class="tok-key">out var</span> canonical))
+    <span class="tok-key">return</span> canonical;
+
+<span class="tok-com">// ⑤ Primary constructor — typed tag registry</span>
+<span class="tok-key">public class</span> <span class="tok-type">TagSet</span>(<span class="tok-type">IEqualityComparer</span>&lt;<span class="tok-key">string</span>&gt;? cmp = <span class="tok-key">null</span>)
+{
+    <span class="tok-key">private readonly</span> <span class="tok-type">HashSet</span>&lt;<span class="tok-key">string</span>&gt; _tags =
+        <span class="tok-key">new</span>(cmp ?? <span class="tok-type">StringComparer</span>.OrdinalIgnoreCase);
+
+    <span class="tok-key">public bool</span> <span class="tok-fn">Toggle</span>(<span class="tok-key">string</span> tag) =&gt;
+        _tags.<span class="tok-fn">Add</span>(tag) || !_tags.<span class="tok-fn">Remove</span>(tag);   <span class="tok-com">// add or remove in one call</span>
+
+    <span class="tok-key">public</span> <span class="tok-type">IReadOnlySet</span>&lt;<span class="tok-key">string</span>&gt; <span class="tok-fn">Snapshot</span>() =&gt; _tags.<span class="tok-fn">ToFrozenSet</span>();
+}</pre>
+        </div>
+
+        <div class="callout perf">
+          <div class="tag">FrozenSet &middot; .NET 8+</div>
+          <p>
+            For sets that you build once and query many times &mdash; keyword tables, feature
+            flags, allowed-values lists &mdash; <code class="inline">ToFrozenSet()</code>
+            produces a read-only set with roughly 20&ndash;40% faster
+            <code class="inline">Contains</code> than <code class="inline">HashSet&lt;T&gt;</code>.
+            The build cost is higher; the payoff is every subsequent lookup.
+          </p>
+        </div>
+      </section>
+
+      <!-- ═══ 09 PITFALLS ═══ -->
+      <section id="pitfalls">
+        <h2><span class="sec-num">09</span>Pitfalls</h2>
+
+        <div class="callout pitfall">
+          <div class="tag">Pitfall 01 &middot; Enumeration order is unspecified</div>
+          <p>
+            Don&#39;t rely on the order items come out of <code class="inline">foreach</code>
+            matching the order they went in. Current .NET happens to preserve insertion order
+            in some cases, but this isn&#39;t guaranteed by contract and explicitly doesn&#39;t
+            hold for <code class="inline">FrozenSet</code> or
+            <code class="inline">ImmutableHashSet</code>. If order matters, sort explicitly
+            or use <code class="inline">SortedSet&lt;T&gt;</code>.
+          </p>
+        </div>
+
+        <div class="callout pitfall">
+          <div class="tag">Pitfall 02 &middot; Set operations mutate the caller</div>
+          <p>
+            <code class="inline">a.UnionWith(b)</code> modifies <code class="inline">a</code>
+            in place &mdash; <code class="inline">b</code> is unchanged. If you want a new set
+            without touching either, use LINQ:
+            <code class="inline">var c = a.Union(b).ToHashSet()</code>. This is the opposite
+            of LINQ&#39;s behaviour, and the naming similarity is a constant source of bugs.
+          </p>
+        </div>
+
+        <div class="callout pitfall">
+          <div class="tag">Pitfall 03 &middot; Custom types need equality</div>
+          <p>
+            Same rules as <code class="inline">Dictionary&lt;TKey, TValue&gt;</code>: your
+            element type&#39;s <code class="inline">GetHashCode()</code> and
+            <code class="inline">Equals()</code> must agree, and must not change after
+            insertion. Records and value tuples handle this automatically; classes with
+            mutable fields are dangerous set members.
+          </p>
+        </div>
+
+        <div class="callout pitfall">
+          <div class="tag">Pitfall 04 &middot; No indexer, no random access</div>
+          <p>
+            <code class="inline">set[i]</code> does not compile. To grab the &ldquo;third
+            item&rdquo; you have to enumerate &mdash; and iteration order isn&#39;t
+            guaranteed. If you find yourself reaching for indexed access, you probably
+            want a <code class="inline">List&lt;T&gt;</code> with parallel
+            deduplication, or <code class="inline">SortedSet&lt;T&gt;</code> for an ordered
+            first-element via <code class="inline">Min</code>/<code class="inline">Max</code>.
+          </p>
+        </div>
+
+        <div class="callout danger">
+          <div class="tag">No built-in ConcurrentHashSet</div>
+          <p>
+            .NET has never shipped a <code class="inline">ConcurrentHashSet&lt;T&gt;</code>.
+            The idiomatic workaround is
+            <code class="inline api">ConcurrentDictionary&lt;T, byte&gt;</code> where you
+            ignore the value &mdash; add with <code class="inline">TryAdd(key, 0)</code>,
+            check with <code class="inline">ContainsKey</code>. It&#39;s not pretty, but
+            it&#39;s lock-free and works.
+          </p>
+        </div>
+      </section>
+
+      <!-- ─── BACK TO LIBRARY (final module) ─── -->
+      <a href="index.html" class="back-to-library">
+        <span class="arrow">&larr;</span>
+        <div>
+          <div class="label">&#x2713; You&#39;ve reached the end of the series</div>
+          <h3>All six modules complete</h3>
+          <p>From <code style="font-family:var(--mono);color:var(--cyan)">Arrays</code> through <code style="font-family:var(--mono);color:var(--cyan)">HashSet</code> &mdash; every core collection in <code style="font-family:var(--mono);color:var(--cyan)">System.Collections.Generic</code> covered. Return to the library to revisit any module.</p>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-inner">
+      <span>C# DATA STRUCTURES &middot; MODULE 06 &middot; FINAL</span>
+      <span class="v">REV. 2026.04 &middot; .NET 10 &middot; C# 14</span>
+      <span><a href="index.html">&larr; BACK TO LIBRARY</a></span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  /* ─── Tabs ────────────────────────────────────── */
+  document.getElementById('ops-tabs').addEventListener('click', e => {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    const id = btn.dataset.tab;
+    document.querySelectorAll('#ops-tabs .tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === id));
+  });
+
+  /* ─── Copy buttons ────────────────────────────── */
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const el = document.getElementById('code-' + btn.dataset.copy);
+      if (!el) return;
+      navigator.clipboard.writeText(el.innerText).then(() => {
+        btn.textContent = 'Copied';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1400);
+      });
+    });
+  });
+
+  /* ─── TOC scroll-spy ──────────────────────────── */
+  const tocLinks = document.querySelectorAll('aside.toc a');
+  const sections = Array.from(document.querySelectorAll('section[id]'));
+  function updateToc() {
+    const y = window.scrollY + 120;
+    let currentId = sections[0]?.id;
+    for (const s of sections) if (s.offsetTop <= y) currentId = s.id;
+    tocLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + currentId));
+  }
+  window.addEventListener('scroll', updateToc, { passive: true });
+  updateToc();
+
+  /* ═══════════════════════════════════════════════
+     VENN DIAGRAM PLAYGROUND
+     ═══════════════════════════════════════════════ */
+  const HS = {
+    setA: new Set(),
+    setB: new Set(),
+    animating: false,
+    opCount: 0,
+  };
+
+  const regionAEl    = document.getElementById('region-a-only');
+  const regionBothEl = document.getElementById('region-both');
+  const regionBEl    = document.getElementById('region-b-only');
+  const aCountEl     = document.getElementById('pg-a-count');
+  const bCountEl     = document.getElementById('pg-b-count');
+  const bothCountEl  = document.getElementById('pg-both-count');
+  const unionCountEl = document.getElementById('pg-union-count');
+  const logEl        = document.getElementById('pg-log');
+  const bannerEl     = document.getElementById('op-banner');
+  const circleAEl    = document.getElementById('circle-a');
+  const circleBEl    = document.getElementById('circle-b');
+  const labelAEl     = document.getElementById('label-a');
+  const labelBEl     = document.getElementById('label-b');
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function computeRegions() {
+    const aOnly = [];
+    const both  = [];
+    const bOnly = [];
+    for (const x of HS.setA) {
+      if (HS.setB.has(x)) both.push(x);
+      else aOnly.push(x);
+    }
+    for (const x of HS.setB) {
+      if (!HS.setA.has(x)) bOnly.push(x);
+    }
+    return { aOnly, both, bOnly };
+  }
+
+  function render(opts = {}) {
+    const { aOnly, both, bOnly } = computeRegions();
+
+    const renderRegion = (el, items, classMarkers = {}) => {
+      el.innerHTML = '';
+      items.forEach(item => {
+        const chip = document.createElement('div');
+        chip.className = 'set-chip';
+        if (opts.newItems?.has(item)) chip.classList.add('newly-added');
+        if (opts.selectedItems?.has(item)) chip.classList.add('selected');
+        if (opts.removingItems?.has(item)) chip.classList.add('removing');
+        chip.textContent = item;
+        chip.dataset.value = item;
+        el.appendChild(chip);
+      });
+    };
+
+    renderRegion(regionAEl, aOnly);
+    renderRegion(regionBothEl, both);
+    renderRegion(regionBEl, bOnly);
+
+    // Stats
+    aCountEl.textContent = HS.setA.size;
+    bCountEl.textContent = HS.setB.size;
+    bothCountEl.textContent = both.length;
+    unionCountEl.textContent = aOnly.length + both.length + bOnly.length;
+
+    // Empty-state message
+    if (HS.setA.size === 0 && HS.setB.size === 0) {
+      if (!document.querySelector('.venn-empty')) {
+        const empty = document.createElement('div');
+        empty.className = 'venn-empty';
+        empty.textContent = '// both sets empty — add items or Load sample to begin';
+        document.getElementById('venn-container').appendChild(empty);
+      }
+    } else {
+      document.querySelector('.venn-empty')?.remove();
+    }
+  }
+
+  function log(op, msg, cls = '') {
+    HS.opCount++;
+    const line = document.createElement('div');
+    line.className = 'pg-log-line ' + cls;
+    line.innerHTML = `<span class="time">[op ${String(HS.opCount).padStart(3, '0')}]</span><span class="op">${op}</span> &mdash; ${msg}`;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+    while (logEl.children.length > 40) logEl.removeChild(logEl.firstChild);
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  function showBanner(html, duration = 2200) {
+    bannerEl.innerHTML = html;
+    bannerEl.classList.add('show');
+    setTimeout(() => bannerEl.classList.remove('show'), duration);
+  }
+
+  /* ─── Single-set operations ─────────────────── */
+  window.setAdd = (which) => {
+    if (HS.animating) return;
+    const input = document.getElementById(which === 'A' ? 'a-input' : 'b-input');
+    const val = input.value.trim();
+    if (!val) return log('ERROR', 'value cannot be empty', 'error');
+
+    const set = which === 'A' ? HS.setA : HS.setB;
+    const wasDupe = set.has(val);
+
+    if (wasDupe) {
+      render();
+      const chips = document.querySelectorAll(`.set-chip[data-value="${esc(val)}"]`);
+      chips.forEach(c => {
+        c.classList.add('duplicate-rejected');
+        setTimeout(() => c.classList.remove('duplicate-rejected'), 500);
+      });
+      log('Add', `${which}.Add("${esc(val)}") returned <b>false</b> — already in set ${which}, ignored`, 'error');
+    } else {
+      set.add(val);
+      const newSet = new Set([val]);
+      render({ newItems: newSet });
+      log('Add', `${which}.Add("${esc(val)}") returned <b>true</b> — new element, |${which}| = ${set.size}`, 'add');
+    }
+  };
+
+  window.setRemove = (which) => {
+    if (HS.animating) return;
+    const input = document.getElementById(which === 'A' ? 'a-input' : 'b-input');
+    const val = input.value.trim();
+    if (!val) return log('ERROR', 'value cannot be empty', 'error');
+
+    const set = which === 'A' ? HS.setA : HS.setB;
+    if (!set.has(val)) {
+      log('Remove', `${which}.Remove("${esc(val)}") returned <b>false</b> — not present`, 'error');
+      return;
+    }
+
+    const chips = document.querySelectorAll(`.set-chip[data-value="${esc(val)}"]`);
+    chips.forEach(c => c.classList.add('exiting'));
+    HS.animating = true;
+    setTimeout(() => {
+      set.delete(val);
+      HS.animating = false;
+      render();
+      log('Remove', `${which}.Remove("${esc(val)}") returned <b>true</b> — |${which}| = ${set.size}`, 'del');
+    }, 380);
+  };
+
+  window.setContains = (which) => {
+    if (HS.animating) return;
+    const input = document.getElementById(which === 'A' ? 'a-input' : 'b-input');
+    const val = input.value.trim();
+    if (!val) return log('ERROR', 'value cannot be empty', 'error');
+
+    const set = which === 'A' ? HS.setA : HS.setB;
+    const present = set.has(val);
+
+    if (present) {
+      const chips = document.querySelectorAll(`.set-chip[data-value="${esc(val)}"]`);
+      chips.forEach(c => {
+        c.classList.add('selected');
+        setTimeout(() => c.classList.remove('selected'), 1500);
+      });
+    }
+    log('Contains', `${which}.Contains("${esc(val)}") &mdash; returned <b>${present}</b>`, present ? 'add' : 'error');
+  };
+
+  /* ─── Set operations (apply to A) ──────────── */
+  async function runOp(op) {
+    if (HS.animating) return;
+    if (HS.setA.size === 0 && HS.setB.size === 0) {
+      return log('ERROR', 'both sets empty — add elements first', 'error');
+    }
+
+    const { aOnly, both, bOnly } = computeRegions();
+    HS.animating = true;
+
+    let keeping = new Set();    // items that stay or are added to A
+    let removing = new Set();   // items leaving A (red dissolve)
+    let addingFromB = [];       // items joining A from B
+    let banner = '';
+    let opCode = '';
+    let description = '';
+
+    if (op === 'union') {
+      keeping = new Set([...aOnly, ...both, ...bOnly]);
+      addingFromB = bOnly;
+      banner = `A.<b>UnionWith</b>(B) &middot; A &larr; A &#8746; B`;
+      opCode = 'UnionWith';
+      description = `kept ${aOnly.length + both.length} existing, added ${bOnly.length} new from B`;
+    } else if (op === 'intersect') {
+      keeping = new Set(both);
+      removing = new Set(aOnly);
+      banner = `A.<b>IntersectWith</b>(B) &middot; A &larr; A &#8745; B`;
+      opCode = 'IntersectWith';
+      description = `kept ${both.length} common, removed ${aOnly.length} from A-only`;
+    } else if (op === 'except') {
+      keeping = new Set(aOnly);
+      removing = new Set(both);
+      banner = `A.<b>ExceptWith</b>(B) &middot; A &larr; A &minus; B`;
+      opCode = 'ExceptWith';
+      description = `kept ${aOnly.length} A-only, removed ${both.length} that were in B`;
+    } else if (op === 'symmetric') {
+      keeping = new Set([...aOnly, ...bOnly]);
+      removing = new Set(both);
+      addingFromB = bOnly;
+      banner = `A.<b>SymmetricExceptWith</b>(B) &middot; A &larr; A &#8710; B`;
+      opCode = 'SymmetricExceptWith';
+      description = `kept ${aOnly.length} A-only, removed ${both.length} common, added ${bOnly.length} B-only`;
+    }
+
+    // Phase 1: show banner + highlight selected items + mark removals
+    showBanner(banner, 3800);
+    log('SET OP', `${opCode}(B) &mdash; ${description}`, 'set-op');
+
+    // Highlight which items are "selected" (staying/being added to A)
+    render({
+      selectedItems: keeping,
+      removingItems: removing,
+    });
+
+    await sleep(1400);
+
+    // Phase 2: apply mutation
+    // Remove items that are leaving A
+    for (const x of removing) HS.setA.delete(x);
+    // Add items joining A (only for union/symmetric, from bOnly)
+    const newItems = new Set();
+    for (const x of addingFromB) {
+      if (!HS.setA.has(x)) {
+        HS.setA.add(x);
+        newItems.add(x);
+      }
+    }
+
+    // For symmetric, also the bOnly items should stay in B (they do), just visualize movement
+    render({ newItems });
+
+    await sleep(900);
+    HS.animating = false;
+    render();
+
+    log(opCode, `A now has ${HS.setA.size} elements, B unchanged (${HS.setB.size})`, 'set-op');
+  }
+  window.runOp = runOp;
+
+  window.loadSample = () => {
+    if (HS.animating) return;
+    HS.setA = new Set(['apple', 'banana', 'cherry', 'date']);
+    HS.setB = new Set(['banana', 'cherry', 'elderberry', 'fig']);
+    render();
+    log('INIT', `sample loaded &mdash; A = {apple, banana, cherry, date}, B = {banana, cherry, elderberry, fig}`);
+  };
+
+  window.swapSets = () => {
+    if (HS.animating) return;
+    [HS.setA, HS.setB] = [HS.setB, HS.setA];
+    render();
+    log('SWAP', `A &harr; B &mdash; |A| = ${HS.setA.size}, |B| = ${HS.setB.size}`);
+  };
+
+  window.resetAll = () => {
+    if (HS.animating) return;
+    HS.setA = new Set();
+    HS.setB = new Set();
+    render();
+    log('CLEAR', 'both sets reset to empty');
+  };
+
+  // Initial render with sample data
+  loadSample();
+</script>
+
+</body>
+</html>
