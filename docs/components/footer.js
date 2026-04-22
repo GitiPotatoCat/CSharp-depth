@@ -1,4 +1,16 @@
-<script>
+/*!
+ * cs.blueprint — site footer component
+ *
+ * Usage (from any page — /index.html or /docs/*.html):
+ *
+ *     <div id="site-footer"></div>
+ *     <script src="docs/components/footer.js"></script>     // from root
+ *     <script src="components/footer.js"></script>          // from docs/
+ *
+ * Self-injecting: one script tag and the footer mounts with search
+ * wired up. Autodetects its own path so links resolve from both the
+ * root index and any page under /docs/.
+ */
 (function () {
   'use strict';
 
@@ -11,13 +23,13 @@
   if (!self) {
     var scripts = document.getElementsByTagName('script');
     for (var i = scripts.length - 1; i >= 0; i--) {
-      if (/footer\.html(\?|#|$)/i.test(scripts[i].src)) { self = scripts[i]; break; }
+      if (/footer\.(js|html)(\?|#|$)/i.test(scripts[i].src)) { self = scripts[i]; break; }
     }
   }
   var ROOT = '';
   try {
     var u = new URL(self.src, document.baseURI);
-    ROOT = u.pathname.replace(/docs\/components\/footer\.html.*$/i, '');
+    ROOT = u.pathname.replace(/docs\/components\/footer\.(js|html).*$/i, '');
     ROOT = new URL(ROOT, u.origin).pathname;
   } catch (_) { ROOT = ''; }
 
@@ -846,4 +858,3 @@
     mount();
   }
 })();
-</script>
