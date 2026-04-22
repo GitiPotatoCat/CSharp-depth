@@ -1,0 +1,849 @@
+<script>
+(function () {
+  'use strict';
+
+  // ---- Authorship ---------------------------------------------------------
+  var AUTHOR_NAME = 'S Majumder';
+  var AUTHOR_URL  = 'https://github.com/smajumder';
+
+  // ---- Self-locate --------------------------------------------------------
+  var self = document.currentScript;
+  if (!self) {
+    var scripts = document.getElementsByTagName('script');
+    for (var i = scripts.length - 1; i >= 0; i--) {
+      if (/footer\.html(\?|#|$)/i.test(scripts[i].src)) { self = scripts[i]; break; }
+    }
+  }
+  var ROOT = '';
+  try {
+    var u = new URL(self.src, document.baseURI);
+    ROOT = u.pathname.replace(/docs\/components\/footer\.html.*$/i, '');
+    ROOT = new URL(ROOT, u.origin).pathname;
+  } catch (_) { ROOT = ''; }
+
+  function href(p) {
+    if (!p) return ROOT || './';
+    if (/^https?:\/\//i.test(p) || p.indexOf('#') === 0) return p;
+    return (ROOT || '') + p;
+  }
+
+  // ---- Styles -------------------------------------------------------------
+  var STYLE = '\
+    .cb-footer { \
+      --cb-fg: #111827; --cb-fg-muted: #6B7280; --cb-fg-subtle: #9CA3AF; \
+      --cb-bg: #FFFFFF; --cb-bg-soft: #FAFAFA; \
+      --cb-border: #E5E7EB; --cb-border-soft: #F3F4F6; \
+      --cb-indigo-500: #4F46E5; --cb-indigo-300: #818CF8; --cb-indigo-bg: #EEF2FF; \
+      --cb-indigo-hi: rgba(99, 102, 241, 0.18); \
+      --cb-indigo-lift: rgba(99, 102, 241, 0.05); \
+      --cb-ns-primitive: #4F46E5; --cb-ns-generic: #6366F1; --cb-ns-legacy: #818CF8; \
+      --cb-ns-concurrent: #059669; --cb-ns-immutable: #D97706; \
+      --cb-sans: "IBM Plex Sans", system-ui, sans-serif; \
+      --cb-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace; \
+      --cb-serif: "IBM Plex Serif", Georgia, serif; \
+      position: relative; \
+      margin-top: 80px; \
+      background: var(--cb-bg); \
+      color: var(--cb-fg); \
+      font-family: var(--cb-sans); \
+      font-size: 13px; line-height: 1.7; \
+      overflow: hidden; \
+    } \
+    /* Top hairline — gradient fade so the footer does not feel cut off */ \
+    .cb-footer::before { \
+      content: ""; position: absolute; top: 0; left: 0; right: 0; \
+      height: 1px; \
+      background: linear-gradient(90deg, transparent 6%, var(--cb-border) 50%, transparent 94%); \
+      pointer-events: none; \
+    } \
+    /* Soft lift behind the headline. Positioned so the brightest part sits \
+       under the search field, fading out before the signature bar. */ \
+    .cb-footer::after { \
+      content: ""; position: absolute; \
+      top: -10%; left: 50%; transform: translateX(-50%); \
+      width: min(1000px, 120%); height: 420px; \
+      background: radial-gradient(ellipse at 50% 45%, var(--cb-indigo-lift) 0%, transparent 60%); \
+      pointer-events: none; z-index: 0; \
+    } \
+    @media (prefers-color-scheme: dark) { \
+      .cb-footer { \
+        --cb-fg: #E5E7EB; --cb-fg-muted: #9CA3AF; --cb-fg-subtle: #6B7280; \
+        --cb-bg: #0B0B10; --cb-bg-soft: #111119; \
+        --cb-border: #1F2028; --cb-border-soft: #171822; \
+        --cb-indigo-bg: #1E1B4B; --cb-indigo-hi: rgba(129, 140, 248, 0.25); \
+        --cb-indigo-lift: rgba(99, 102, 241, 0.08); \
+      } \
+    } \
+    .cb-footer-inner { \
+      position: relative; z-index: 1; \
+      max-width: 960px; margin: 0 auto; \
+      padding: clamp(40px, 6vw, 72px) clamp(20px, 4vw, 48px) clamp(28px, 4vw, 40px); \
+    } \
+    \
+    /* ---- [1] Eyebrow strip ---------------------------------------- */ \
+    .cb-eyebrow { \
+      display: flex; align-items: center; gap: 18px; \
+      margin-bottom: clamp(28px, 4vw, 44px); \
+    } \
+    .cb-brand { \
+      display: inline-flex; align-items: center; gap: 10px; \
+      text-decoration: none; flex: none; \
+    } \
+    .cb-brand .cb-mono { \
+      width: 28px; height: 28px; display: grid; place-items: center; \
+      font-family: var(--cb-mono); font-size: 13px; font-weight: 500; \
+      color: var(--cb-indigo-500); background: var(--cb-indigo-bg); \
+      border-radius: 5px; letter-spacing: -0.02em; \
+      transition: transform 200ms; \
+    } \
+    .cb-brand:hover .cb-mono { transform: rotate(-6deg); } \
+    .cb-brand .cb-name { \
+      font-family: var(--cb-sans); font-weight: 300; font-size: 20px; \
+      letter-spacing: -0.02em; color: var(--cb-fg); \
+    } \
+    .cb-eyebrow-label { \
+      font-family: var(--cb-mono); font-size: 10.5px; font-weight: 400; \
+      letter-spacing: 0.14em; text-transform: uppercase; \
+      color: var(--cb-fg-subtle); \
+      flex: none; white-space: nowrap; \
+    } \
+    .cb-eyebrow-rule { \
+      flex: 1 1 auto; height: 1px; \
+      background: var(--cb-border); \
+    } \
+    \
+    /* ---- [2] Headline + search hero -------------------------------- */ \
+    .cb-hero { \
+      text-align: center; \
+      max-width: 560px; margin: 0 auto; \
+    } \
+    .cb-hero-title { \
+      font-family: var(--cb-serif); font-weight: 300; font-style: italic; \
+      font-size: clamp(20px, 3.4vw, 28px); \
+      line-height: 1.3; letter-spacing: -0.01em; \
+      color: var(--cb-fg); margin: 0; \
+    } \
+    .cb-hero-title .cb-accent { \
+      color: var(--cb-indigo-500); \
+      font-style: normal; font-family: var(--cb-mono); \
+      font-size: 0.92em; font-weight: 400; \
+      padding: 0 2px; \
+    } \
+    @media (prefers-color-scheme: dark) { \
+      .cb-hero-title .cb-accent { color: var(--cb-indigo-300); } \
+    } \
+    .cb-hero-sub { \
+      font-family: var(--cb-sans); font-size: 13px; \
+      color: var(--cb-fg-muted); margin: 12px 0 0; \
+    } \
+    .cb-hero-sub kbd { \
+      font-family: var(--cb-mono); font-size: 10.5px; font-weight: 400; \
+      color: var(--cb-fg-muted); \
+      padding: 2px 6px; margin: 0 2px; \
+      background: var(--cb-bg); \
+      border: 0.5px solid var(--cb-border); \
+      border-radius: 4px; \
+      display: inline-block; \
+    } \
+    .cb-search { \
+      position: relative; \
+      max-width: 520px; margin: 24px auto 0; \
+    } \
+    .cb-search input { \
+      width: 100%; box-sizing: border-box; \
+      padding: 14px 56px 14px 44px; \
+      font-family: var(--cb-sans); font-size: 14px; \
+      color: var(--cb-fg); background: var(--cb-bg); \
+      border: 0.5px solid var(--cb-border); border-radius: 12px; \
+      outline: none; \
+      box-shadow: 0 1px 2px rgba(17, 24, 39, 0.03); \
+      transition: border-color 180ms, box-shadow 180ms, background 180ms; \
+    } \
+    @media (prefers-color-scheme: dark) { \
+      .cb-search input { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.20); } \
+    } \
+    .cb-search input::placeholder { color: var(--cb-fg-subtle); } \
+    .cb-search input:focus { \
+      border-color: var(--cb-indigo-300); \
+      box-shadow: 0 0 0 4px var(--cb-indigo-hi), 0 1px 2px rgba(17, 24, 39, 0.04); \
+    } \
+    .cb-search .cb-search-icon { \
+      position: absolute; top: 50%; left: 16px; transform: translateY(-50%); \
+      width: 16px; height: 16px; color: var(--cb-fg-subtle); \
+      pointer-events: none; \
+    } \
+    .cb-search-kbd { \
+      position: absolute; top: 50%; right: 12px; transform: translateY(-50%); \
+      pointer-events: none; \
+    } \
+    .cb-search-kbd kbd { \
+      font-family: var(--cb-mono); font-size: 10.5px; font-weight: 400; \
+      color: var(--cb-fg-subtle); \
+      padding: 2px 6px; min-width: 18px; text-align: center; \
+      background: var(--cb-bg-soft); \
+      border: 0.5px solid var(--cb-border); \
+      border-radius: 4px; \
+      display: inline-block; \
+    } \
+    \
+    .cb-results { \
+      position: absolute; top: calc(100% + 8px); left: 0; right: 0; \
+      max-height: 340px; overflow-y: auto; \
+      background: var(--cb-bg); \
+      border: 0.5px solid var(--cb-border); \
+      border-radius: 12px; \
+      box-shadow: 0 12px 32px rgba(17, 24, 39, 0.08), 0 2px 6px rgba(17, 24, 39, 0.04); \
+      z-index: 10; \
+      display: none; \
+      text-align: left; \
+    } \
+    @media (prefers-color-scheme: dark) { \
+      .cb-results { box-shadow: 0 12px 32px rgba(0,0,0,0.45), 0 2px 6px rgba(0,0,0,0.25); } \
+    } \
+    .cb-results[data-open="true"] { display: block; } \
+    .cb-results-head { \
+      padding: 8px 14px 6px; \
+      font-family: var(--cb-mono); font-size: 10px; font-weight: 400; \
+      letter-spacing: 0.10em; text-transform: uppercase; \
+      color: var(--cb-fg-subtle); \
+      border-bottom: 0.5px solid var(--cb-border-soft); \
+    } \
+    .cb-result { \
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; \
+      padding: 10px 14px; \
+      font-family: var(--cb-mono); font-size: 12.5px; \
+      color: var(--cb-fg); text-decoration: none; \
+      border-bottom: 0.5px solid var(--cb-border-soft); \
+      cursor: pointer; \
+    } \
+    .cb-result:last-child { border-bottom: 0; } \
+    .cb-result:hover, .cb-result[data-active="true"] { \
+      background: var(--cb-bg-soft); \
+    } \
+    .cb-result-left { \
+      display: flex; align-items: center; gap: 12px; min-width: 0; \
+    } \
+    .cb-result-name { \
+      color: var(--cb-fg); \
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; \
+    } \
+    .cb-result[data-active="true"] .cb-result-name, \
+    .cb-result:hover .cb-result-name { color: var(--cb-indigo-500); } \
+    @media (prefers-color-scheme: dark) { \
+      .cb-result[data-active="true"] .cb-result-name, \
+      .cb-result:hover .cb-result-name { color: var(--cb-indigo-300); } \
+    } \
+    .cb-result-name mark { \
+      background: var(--cb-indigo-hi); color: inherit; \
+      padding: 0; border-radius: 2px; font-weight: 500; \
+    } \
+    .cb-result-ns { \
+      font-family: var(--cb-sans); font-size: 11px; \
+      color: var(--cb-fg-subtle); \
+      white-space: nowrap; flex: none; \
+    } \
+    .cb-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; display: inline-block; } \
+    .cb-dot.primitive  { background: var(--cb-ns-primitive); } \
+    .cb-dot.generic    { background: var(--cb-ns-generic); } \
+    .cb-dot.legacy     { background: var(--cb-ns-legacy); } \
+    .cb-dot.concurrent { background: var(--cb-ns-concurrent); } \
+    .cb-dot.immutable  { background: var(--cb-ns-immutable); } \
+    .cb-result-enter-hint { \
+      font-family: var(--cb-mono); font-size: 10px; \
+      color: var(--cb-fg-subtle); \
+      padding: 1px 5px; border: 0.5px solid var(--cb-border); border-radius: 3px; \
+      opacity: 0; \
+    } \
+    .cb-result[data-active="true"] .cb-result-enter-hint, \
+    .cb-result:hover .cb-result-enter-hint { opacity: 1; } \
+    .cb-empty { \
+      padding: 18px; \
+      font-family: var(--cb-serif); font-style: italic; font-weight: 300; \
+      font-size: 13px; color: var(--cb-fg-subtle); \
+      text-align: center; \
+    } \
+    .cb-empty code { \
+      font-family: var(--cb-mono); font-style: normal; font-size: 11.5px; \
+      color: var(--cb-fg-muted); \
+      padding: 1px 5px; background: var(--cb-bg-soft); \
+      border: 0.5px solid var(--cb-border-soft); border-radius: 3px; \
+    } \
+    \
+    /* ---- [3] Stat ribbon ------------------------------------------ */ \
+    /* Four rounded pills. Wraps gracefully; values use tabular-num so the \
+       numeric stats sit cleanly regardless of digits. */ \
+    .cb-stats { \
+      display: flex; flex-wrap: wrap; justify-content: center; \
+      gap: 10px; \
+      margin: clamp(24px, 4vw, 36px) auto 0; \
+    } \
+    .cb-stat { \
+      display: inline-flex; align-items: baseline; gap: 8px; \
+      padding: 7px 14px; \
+      background: var(--cb-bg); \
+      border: 0.5px solid var(--cb-border); \
+      border-radius: 999px; \
+      transition: border-color 150ms, color 150ms; \
+    } \
+    .cb-stat:hover { border-color: var(--cb-indigo-300); } \
+    .cb-stat-value { \
+      font-family: var(--cb-mono); font-size: 13px; font-weight: 500; \
+      color: var(--cb-fg); \
+      font-variant-numeric: tabular-nums; \
+      line-height: 1; \
+    } \
+    .cb-stat-label { \
+      font-family: var(--cb-mono); font-size: 10px; font-weight: 400; \
+      letter-spacing: 0.10em; text-transform: uppercase; \
+      color: var(--cb-fg-subtle); \
+      line-height: 1; \
+    } \
+    \
+    /* ---- [4] Signature bar ---------------------------------------- */ \
+    .cb-sig { \
+      margin-top: clamp(32px, 5vw, 56px); \
+      padding-top: clamp(20px, 3vw, 24px); \
+      border-top: 0.5px solid var(--cb-border-soft); \
+      display: grid; \
+      grid-template-columns: 1fr auto 1fr; \
+      align-items: center; \
+      gap: 20px; \
+    } \
+    .cb-sig-left { \
+      font-family: var(--cb-serif); font-style: italic; font-weight: 300; \
+      font-size: 12.5px; color: var(--cb-fg-subtle); \
+      line-height: 1.6; \
+    } \
+    .cb-sig-center { \
+      display: inline-flex; align-items: center; justify-content: center; \
+      gap: 14px; \
+    } \
+    .cb-sig-rule { \
+      flex: none; width: 44px; height: 0.5px; \
+      background: var(--cb-border); \
+    } \
+    .cb-sig-mark { \
+      width: 18px; height: 18px; border-radius: 50%; \
+      background: var(--cb-bg); \
+      border: 0.5px solid var(--cb-border); \
+      display: grid; place-items: center; \
+      position: relative; \
+    } \
+    .cb-sig-mark::after { \
+      content: ""; \
+      width: 4px; height: 4px; border-radius: 50%; \
+      background: var(--cb-indigo-500); \
+    } \
+    @media (prefers-color-scheme: dark) { \
+      .cb-sig-mark::after { background: var(--cb-indigo-300); } \
+    } \
+    .cb-sig-right { \
+      display: inline-flex; align-items: center; justify-content: flex-end; \
+      gap: 14px; flex-wrap: wrap; \
+    } \
+    \
+    /* Author link --------------------------------------------------- */ \
+    .cb-author { \
+      display: inline-flex; align-items: baseline; gap: 7px; \
+      text-decoration: none; \
+      padding: 4px 8px; margin: -4px -8px; border-radius: 5px; \
+      transition: background 150ms; \
+    } \
+    .cb-author:hover { background: var(--cb-bg-soft); } \
+    .cb-author-label { \
+      font-family: var(--cb-mono); font-size: 10px; font-weight: 400; \
+      letter-spacing: 0.12em; text-transform: uppercase; \
+      color: var(--cb-fg-subtle); \
+    } \
+    .cb-author-name { \
+      font-family: var(--cb-sans); font-weight: 500; font-size: 14px; \
+      letter-spacing: -0.005em; \
+      color: var(--cb-fg); \
+      transition: color 150ms; \
+      position: relative; \
+    } \
+    .cb-author-name::after { \
+      content: ""; position: absolute; left: 0; right: 0; bottom: -2px; \
+      height: 1px; background: currentColor; opacity: 0; \
+      transform: scaleX(0.3); transform-origin: left; \
+      transition: opacity 200ms, transform 200ms; \
+    } \
+    .cb-author:hover .cb-author-name { color: var(--cb-indigo-500); } \
+    .cb-author:hover .cb-author-name::after { opacity: 1; transform: scaleX(1); } \
+    @media (prefers-color-scheme: dark) { \
+      .cb-author:hover .cb-author-name { color: var(--cb-indigo-300); } \
+    } \
+    \
+    /* Copyright ----------------------------------------------------- */ \
+    .cb-copy { \
+      display: inline-flex; align-items: center; gap: 6px; \
+      font-family: var(--cb-mono); font-size: 11px; \
+      color: var(--cb-fg-subtle); \
+    } \
+    .cb-copy-c { \
+      display: inline-grid; place-items: center; \
+      width: 15px; height: 15px; \
+      border-radius: 50%; \
+      border: 0.75px solid currentColor; \
+      font-family: var(--cb-serif); font-size: 9.5px; font-weight: 500; \
+      letter-spacing: 0; line-height: 1; \
+      color: var(--cb-fg-muted); \
+      flex: none; \
+    } \
+    .cb-copy .cb-year { \
+      font-family: var(--cb-mono); \
+      font-variant-numeric: tabular-nums; \
+      font-feature-settings: "tnum" 1, "kern" 1; \
+      color: var(--cb-fg); font-weight: 500; \
+      letter-spacing: 0.01em; \
+    } \
+    \
+    /* ---- Responsive ----------------------------------------------- */ \
+    /* Tablet — collapse the 3-column signature into a single centred column, \
+       keep the fleuron visible as a horizontal divider. */ \
+    @media (max-width: 820px) { \
+      .cb-sig { \
+        grid-template-columns: 1fr; \
+        text-align: center; gap: 14px; \
+      } \
+      .cb-sig-left { text-align: center; max-width: 44ch; margin: 0 auto; } \
+      .cb-sig-right { justify-content: center; } \
+      .cb-sig-center { gap: 10px; } \
+      .cb-sig-rule { width: 28px; } \
+    } \
+    /* Small tablet / large phone */ \
+    @media (max-width: 640px) { \
+      .cb-eyebrow { gap: 12px; margin-bottom: 28px; } \
+      .cb-eyebrow-rule { display: none; } \
+      .cb-eyebrow-label { \
+        margin-left: auto; \
+        padding: 3px 8px; \
+        border: 0.5px solid var(--cb-border); border-radius: 999px; \
+        font-size: 9.5px; \
+      } \
+      .cb-hero-sub { font-size: 12.5px; } \
+      .cb-stats { gap: 8px; } \
+      .cb-stat { padding: 6px 12px; } \
+    } \
+    /* Phone — keep the essential interactions, strip decoration. */ \
+    @media (max-width: 480px) { \
+      .cb-eyebrow { margin-bottom: 24px; } \
+      .cb-brand .cb-name { font-size: 18px; } \
+      .cb-brand .cb-mono { width: 26px; height: 26px; font-size: 12px; } \
+      .cb-hero-title { max-width: 22ch; margin: 0 auto; } \
+      .cb-hero-sub { max-width: 32ch; margin: 10px auto 0; line-height: 1.6; } \
+      .cb-search { margin-top: 20px; } \
+      .cb-search input { \
+        padding: 12px 16px 12px 40px; font-size: 14px; \
+        border-radius: 10px; \
+      } \
+      .cb-search .cb-search-icon { left: 14px; } \
+      .cb-search-kbd { display: none; } \
+      .cb-stat-value { font-size: 12.5px; } \
+      .cb-stat-label { font-size: 9.5px; } \
+      .cb-sig-right { gap: 10px 14px; } \
+      .cb-author-name { font-size: 13px; } \
+      .cb-copy { font-size: 10.5px; } \
+    } \
+    /* Very small phone — hide the stat ribbon entirely, it never reads \
+       cleanly below this width. The search still carries the hero. */ \
+    @media (max-width: 380px) { \
+      .cb-stats { display: none; } \
+      .cb-sig { margin-top: 36px; } \
+    } \
+  ';
+
+  // ---- Search index -------------------------------------------------------
+  var INDEX = [
+    { name: 'Array',                     path: 'docs/arrays.html',                      group: 'System',     dot: 'primitive',
+      keywords: 'array raw fixed contiguous buffer t[]' },
+    { name: 'Span<T>',                   path: 'docs/span.html',                        group: 'System',     dot: 'primitive',
+      keywords: 'span slice view stackalloc ref struct window' },
+    { name: 'Memory<T>',                 path: 'docs/memory.html',                      group: 'System',     dot: 'primitive',
+      keywords: 'memory heap span async buffer region' },
+
+    { name: 'List<T>',                   path: 'docs/list.html',                        group: 'Generic',    dot: 'generic',
+      keywords: 'list array-backed resizable dynamic arraylist vector' },
+    { name: 'LinkedList<T>',             path: 'docs/linkedlist.html',                  group: 'Generic',    dot: 'generic',
+      keywords: 'linked list doubly linkedlist node chain' },
+    { name: 'Stack<T>',                  path: 'docs/stack.html',                       group: 'Generic',    dot: 'generic',
+      keywords: 'stack lifo push pop last-in first-out' },
+    { name: 'Queue<T>',                  path: 'docs/queue.html',                       group: 'Generic',    dot: 'generic',
+      keywords: 'queue fifo enqueue dequeue ring buffer first-in first-out' },
+    { name: 'PriorityQueue<T,P>',        path: 'docs/priority-queue.html',              group: 'Generic',    dot: 'generic',
+      keywords: 'priority queue heap min-heap max-heap pq scheduler' },
+    { name: 'Dictionary<K,V>',           path: 'index.html',                            group: 'Generic',    dot: 'generic',
+      keywords: 'dictionary dict map hashmap hash map kv lookup associative' },
+    { name: 'SortedDictionary<K,V>',     path: 'docs/sorted-dictionary.html',           group: 'Generic',    dot: 'generic',
+      keywords: 'sorted dictionary ordered map treemap red-black tree' },
+    { name: 'SortedList<K,V>',           path: 'docs/sorted-list.html',                 group: 'Generic',    dot: 'generic',
+      keywords: 'sorted list ordered map array-backed indexable' },
+    { name: 'HashSet<T>',                path: 'docs/hashset.html',                     group: 'Generic',    dot: 'generic',
+      keywords: 'hashset set unique membership union intersect' },
+    { name: 'SortedSet<T>',              path: 'docs/sorted-set.html',                  group: 'Generic',    dot: 'generic',
+      keywords: 'sorted set ordered unique treeset red-black tree min max' },
+    { name: 'ObservableCollection<T>',   path: 'docs/observable-collection.html',       group: 'Generic',    dot: 'generic',
+      keywords: 'observable collection inotify changed binding mvvm wpf maui' },
+
+    { name: 'ArrayList',                 path: 'docs/arraylist.html',                   group: 'Legacy',     dot: 'legacy',
+      keywords: 'arraylist legacy non-generic object boxing' },
+    { name: 'Hashtable',                 path: 'docs/hashtable.html',                   group: 'Legacy',     dot: 'legacy',
+      keywords: 'hashtable legacy non-generic map dictionary' },
+    { name: 'Stack (legacy)',            path: 'docs/legacy-stack.html',                group: 'Legacy',     dot: 'legacy',
+      keywords: 'stack legacy non-generic object lifo' },
+    { name: 'Queue (legacy)',            path: 'docs/legacy-queue.html',                group: 'Legacy',     dot: 'legacy',
+      keywords: 'queue legacy non-generic object fifo' },
+    { name: 'SortedList (legacy)',       path: 'docs/legacy-sorted-list.html',          group: 'Legacy',     dot: 'legacy',
+      keywords: 'sorted list legacy non-generic ordered map' },
+    { name: 'BitArray',                  path: 'docs/bitarray.html',                    group: 'Legacy',     dot: 'legacy',
+      keywords: 'bitarray bitset bit array flags packed bits bitmap' },
+    { name: 'StringCollection',          path: 'docs/string-collection.html',           group: 'Legacy',     dot: 'legacy',
+      keywords: 'stringcollection string collection legacy specialized' },
+
+    { name: 'ConcurrentDictionary',      path: 'docs/concurrent-dictionary.html',       group: 'Concurrent', dot: 'concurrent',
+      keywords: 'concurrent dictionary thread-safe lock-free hashmap map striped' },
+    { name: 'ConcurrentQueue<T>',        path: 'docs/concurrent-queue.html',            group: 'Concurrent', dot: 'concurrent',
+      keywords: 'concurrent queue lock-free thread-safe fifo mpmc' },
+    { name: 'ConcurrentStack<T>',        path: 'docs/concurrent-stack.html',            group: 'Concurrent', dot: 'concurrent',
+      keywords: 'concurrent stack lock-free thread-safe lifo cas' },
+    { name: 'ConcurrentBag<T>',          path: 'docs/concurrent-bag.html',              group: 'Concurrent', dot: 'concurrent',
+      keywords: 'concurrent bag thread-local work stealing unordered pool' },
+    { name: 'BlockingCollection<T>',     path: 'docs/blocking-collection.html',         group: 'Concurrent', dot: 'concurrent',
+      keywords: 'blocking collection producer consumer bounded completeadding channel' },
+
+    { name: 'ImmutableArray<T>',         path: 'docs/immutable-array.html',             group: 'Immutable',  dot: 'immutable',
+      keywords: 'immutable array struct frozen readonly persistent snapshot' },
+    { name: 'ImmutableList<T>',          path: 'docs/immutable-list.html',              group: 'Immutable',  dot: 'immutable',
+      keywords: 'immutable list persistent avl tree structural sharing' },
+    { name: 'ImmutableDictionary',       path: 'docs/immutable-dictionary.html',        group: 'Immutable',  dot: 'immutable',
+      keywords: 'immutable dictionary persistent map hamt trie frozen' },
+    { name: 'ImmutableSortedDictionary', path: 'docs/immutable-sorted-dictionary.html', group: 'Immutable',  dot: 'immutable',
+      keywords: 'immutable sorted dictionary persistent ordered map avl tree' },
+    { name: 'ImmutableHashSet<T>',       path: 'docs/immutable-hashset.html',           group: 'Immutable',  dot: 'immutable',
+      keywords: 'immutable hashset persistent set hamt frozen unique' },
+    { name: 'ImmutableSortedSet<T>',     path: 'docs/immutable-sorted-set.html',        group: 'Immutable',  dot: 'immutable',
+      keywords: 'immutable sorted set persistent ordered unique avl tree min max index' },
+    { name: 'ImmutableQueue<T>',         path: 'docs/immutable-queue.html',             group: 'Immutable',  dot: 'immutable',
+      keywords: 'immutable queue persistent fifo two-stack functional' },
+    { name: 'ImmutableStack<T>',         path: 'docs/immutable-stack.html',             group: 'Immutable',  dot: 'immutable',
+      keywords: 'immutable stack persistent lifo cons list functional' }
+  ];
+
+  // ---- DOM helpers --------------------------------------------------------
+  function el(tag, attrs, kids) {
+    var n = document.createElement(tag);
+    if (attrs) for (var k in attrs) {
+      if (k === 'class') n.className = attrs[k];
+      else if (k === 'html') n.innerHTML = attrs[k];
+      else n.setAttribute(k, attrs[k]);
+    }
+    (kids || []).forEach(function (c) {
+      if (c == null) return;
+      n.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+    });
+    return n;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  // ---- Fuzzy search (unchanged — token-aware, five-stage scorer) ---------
+  function tokenize(s) {
+    return (s || '').toLowerCase().trim().split(/\s+/).filter(Boolean);
+  }
+
+  function stageScore(tok, hay) {
+    if (!tok || !hay) return { s: -1, ranges: [] };
+    var t = tok, h = hay;
+    if (h === t) return { s: 1000, ranges: [[0, t.length]] };
+    if (h.indexOf(t) === 0) return { s: 720 - h.length, ranges: [[0, t.length]] };
+    var re = new RegExp('(^|[^a-z0-9])(' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'i');
+    var m = re.exec(h);
+    if (m) {
+      var idx = m.index + m[1].length;
+      return { s: 500 - idx, ranges: [[idx, idx + t.length]] };
+    }
+    var i = h.indexOf(t);
+    if (i > 0) return { s: 300 - i, ranges: [[i, i + t.length]] };
+    var qi = 0, first = -1, last = -1, ranges = [];
+    for (var j = 0; j < h.length && qi < t.length; j++) {
+      if (h.charAt(j) === t.charAt(qi)) {
+        if (first < 0) first = j;
+        last = j;
+        ranges.push([j, j + 1]);
+        qi++;
+      }
+    }
+    if (qi === t.length) {
+      var span = last - first + 1;
+      return { s: Math.max(5, 140 - span - first), ranges: ranges };
+    }
+    return { s: -1, ranges: [] };
+  }
+
+  function mergeRanges(rs) {
+    if (!rs.length) return rs;
+    rs = rs.slice().sort(function (a, b) { return a[0] - b[0]; });
+    var out = [rs[0].slice()];
+    for (var i = 1; i < rs.length; i++) {
+      var top = out[out.length - 1];
+      if (rs[i][0] <= top[1]) top[1] = Math.max(top[1], rs[i][1]);
+      else out.push(rs[i].slice());
+    }
+    return out;
+  }
+
+  function highlight(name, ranges) {
+    if (!ranges || !ranges.length) return escapeHtml(name);
+    ranges = mergeRanges(ranges);
+    var out = '';
+    var cursor = 0;
+    ranges.forEach(function (r) {
+      if (r[0] > cursor) out += escapeHtml(name.slice(cursor, r[0]));
+      out += '<mark>' + escapeHtml(name.slice(r[0], r[1])) + '</mark>';
+      cursor = r[1];
+    });
+    if (cursor < name.length) out += escapeHtml(name.slice(cursor));
+    return out;
+  }
+
+  function scoreItem(query, item) {
+    var tokens = tokenize(query);
+    if (!tokens.length) return null;
+    var nameLower = item.name.toLowerCase();
+    var kwLower = (item.keywords || '').toLowerCase();
+    var total = 0, ranges = [];
+    for (var i = 0; i < tokens.length; i++) {
+      var tok = tokens[i];
+      var inName = stageScore(tok, nameLower);
+      var inKw   = stageScore(tok, kwLower);
+      var nameScore = inName.s >= 0 ? inName.s + 25 : -1;
+      var kwScore   = inKw.s   >= 0 ? inKw.s * 0.55 : -1;
+      if (nameScore < 0 && kwScore < 0) return null;
+      if (nameScore >= kwScore) {
+        total += nameScore;
+        if (inName.ranges.length) ranges = ranges.concat(inName.ranges);
+      } else {
+        total += kwScore;
+      }
+    }
+    if (tokens.length === 1) total -= nameLower.length * 0.25;
+    return { score: total, ranges: ranges };
+  }
+
+  function wireSearch(root) {
+    var input = root.querySelector('.cb-search input');
+    var panel = root.querySelector('.cb-results');
+    var active = -1;
+    var matches = [];
+
+    function close() {
+      panel.setAttribute('data-open', 'false');
+      active = -1;
+    }
+
+    function render(q) {
+      panel.innerHTML = '';
+      matches = [];
+      q = (q || '').trim();
+      if (!q) { close(); return; }
+
+      INDEX.forEach(function (item) {
+        var r = scoreItem(q, item);
+        if (r) matches.push({ item: item, score: r.score, ranges: r.ranges });
+      });
+      matches.sort(function (a, b) { return b.score - a.score; });
+      matches = matches.slice(0, 8);
+
+      if (matches.length === 0) {
+        var empty = el('div', { class: 'cb-empty' });
+        empty.innerHTML = 'Nothing matches <code>' + escapeHtml(q) + '</code> \u2014 try <code>map</code>, <code>fifo</code>, or <code>immutable</code>.';
+        panel.appendChild(empty);
+      } else {
+        var head = el('div', { class: 'cb-results-head' },
+          [matches.length + ' match' + (matches.length === 1 ? '' : 'es')]);
+        panel.appendChild(head);
+
+        matches.forEach(function (m, i) {
+          var left = el('span', { class: 'cb-result-left' }, [
+            el('span', { class: 'cb-dot ' + m.item.dot })
+          ]);
+          var nameSpan = document.createElement('span');
+          nameSpan.className = 'cb-result-name';
+          nameSpan.innerHTML = highlight(m.item.name, m.ranges);
+          left.appendChild(nameSpan);
+
+          var right = el('span', {
+            style: 'display:inline-flex;align-items:center;gap:10px;flex:none;'
+          }, [
+            el('span', { class: 'cb-result-ns' }, [m.item.group]),
+            el('span', { class: 'cb-result-enter-hint', 'aria-hidden': 'true' }, ['\u21B5'])
+          ]);
+
+          var link = el('a', {
+            class: 'cb-result',
+            href: href(m.item.path),
+            role: 'option',
+            'data-index': String(i)
+          }, [left, right]);
+          panel.appendChild(link);
+        });
+      }
+      panel.setAttribute('data-open', 'true');
+      active = -1;
+    }
+
+    function setActive(i) {
+      var links = panel.querySelectorAll('.cb-result');
+      links.forEach(function (e) { e.removeAttribute('data-active'); });
+      if (i >= 0 && i < links.length) {
+        links[i].setAttribute('data-active', 'true');
+        links[i].scrollIntoView({ block: 'nearest' });
+      }
+      active = i;
+    }
+
+    input.addEventListener('input', function () { render(input.value); });
+    input.addEventListener('focus', function () { if (input.value.trim()) render(input.value); });
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); setActive(Math.min(active + 1, matches.length - 1)); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); setActive(Math.max(active - 1, 0)); }
+      else if (e.key === 'Enter') {
+        if (active >= 0 && matches[active]) { e.preventDefault(); window.location.href = href(matches[active].item.path); }
+      }
+      else if (e.key === 'Escape') { close(); input.blur(); }
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!root.contains(e.target)) close();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      var tag = (e.target && e.target.tagName || '').toLowerCase();
+      if (e.key === '/' && tag !== 'input' && tag !== 'textarea' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        input.focus();
+        input.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    });
+  }
+
+  // ---- Mount --------------------------------------------------------------
+  function mount() {
+    if (!document.getElementById('cb-footer-styles')) {
+      var s = document.createElement('style');
+      s.id = 'cb-footer-styles';
+      s.textContent = STYLE;
+      document.head.appendChild(s);
+    }
+
+    // [1] Eyebrow ----------------------------------------------------------
+    var brand = el('a', {
+      class: 'cb-brand',
+      href: href('index.html'),
+      'aria-label': 'cs.blueprint home'
+    }, [
+      el('div', { class: 'cb-mono' }, ['C#']),
+      el('div', { class: 'cb-name' }, ['cs.blueprint'])
+    ]);
+
+    var eyebrow = el('div', { class: 'cb-eyebrow' }, [
+      brand,
+      el('div', { class: 'cb-eyebrow-rule' }),
+      el('div', { class: 'cb-eyebrow-label' }, ['End of reference'])
+    ]);
+
+    // [2] Hero + search ----------------------------------------------------
+    var heroTitle = el('h2', { class: 'cb-hero-title' });
+    heroTitle.innerHTML = 'Not sure where to go next? <span class="cb-accent">Search</span> the reference.';
+
+    var heroSub = el('p', { class: 'cb-hero-sub' });
+    heroSub.innerHTML = 'Jump to any of the 34 data structures \u2014 press <kbd>/</kbd> from anywhere, <kbd>\u2191</kbd> <kbd>\u2193</kbd> to navigate, <kbd>\u21B5</kbd> to open.';
+
+    var search = el('div', { class: 'cb-search' });
+    search.innerHTML = '\
+      <svg class="cb-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">\
+        <circle cx="11" cy="11" r="7"></circle>\
+        <path d="m20 20-3.5-3.5"></path>\
+      </svg>\
+      <input type="search" placeholder="Try &quot;map&quot;, &quot;fifo&quot;, &quot;immutable&quot;, &quot;thread-safe&quot;\u2026" aria-label="Search data structures" autocomplete="off" spellcheck="false" />\
+      <span class="cb-search-kbd"><kbd>/</kbd></span>\
+      <div class="cb-results" role="listbox" aria-label="Search results"></div>\
+    ';
+
+    var hero = el('div', { class: 'cb-hero' }, [heroTitle, heroSub, search]);
+
+    // [3] Stat ribbon ------------------------------------------------------
+    function stat(value, label) {
+      return el('div', { class: 'cb-stat' }, [
+        el('span', { class: 'cb-stat-value' }, [value]),
+        el('span', { class: 'cb-stat-label' }, [label])
+      ]);
+    }
+    var stats = el('div', { class: 'cb-stats' }, [
+      stat('34', 'Structures'),
+      stat('05', 'Namespaces'),
+      stat('.NET 10', 'Target'),
+      stat('C# 14', 'Language')
+    ]);
+
+    // [4] Signature bar ----------------------------------------------------
+    var sigLeft = el('div', { class: 'cb-sig-left' }, [
+      'Distilled from Microsoft Learn \u2014 written with care, kept deliberately short.'
+    ]);
+
+    var sigCenter = el('div', { class: 'cb-sig-center', 'aria-hidden': 'true' }, [
+      el('span', { class: 'cb-sig-rule' }),
+      el('span', { class: 'cb-sig-mark' }),
+      el('span', { class: 'cb-sig-rule' })
+    ]);
+
+    var authorLink = el('a', {
+      class: 'cb-author',
+      href: AUTHOR_URL,
+      rel: 'author noopener',
+      target: '_blank',
+      title: 'Open author profile in a new tab'
+    }, [
+      el('span', { class: 'cb-author-label' }, ['By']),
+      el('span', { class: 'cb-author-name' }, [AUTHOR_NAME])
+    ]);
+
+    // Copyright — current year only.
+    var year = new Date().getFullYear();
+    var copy = el('span', {
+      class: 'cb-copy',
+      'aria-label': 'Copyright ' + year
+    }, [
+      el('span', { class: 'cb-copy-c', 'aria-hidden': 'true' }, ['C']),
+      el('span', { class: 'cb-year' }, [String(year)])
+    ]);
+
+    var sigRight = el('div', { class: 'cb-sig-right' }, [authorLink, copy]);
+    var sig = el('div', { class: 'cb-sig' }, [sigLeft, sigCenter, sigRight]);
+
+    // Compose --------------------------------------------------------------
+    var inner = el('div', { class: 'cb-footer-inner' }, [eyebrow, hero, stats, sig]);
+    var footer = el('footer', {
+      class: 'cb-footer',
+      role: 'contentinfo',
+      'aria-label': 'Site footer'
+    }, [inner]);
+
+    var slot = document.getElementById('site-footer');
+    if (slot) slot.replaceWith(footer);
+    else document.body.appendChild(footer);
+
+    wireSearch(footer);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', mount);
+  } else {
+    mount();
+  }
+})();
+</script>
