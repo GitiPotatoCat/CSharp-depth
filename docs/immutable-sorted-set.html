@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ImmutableSortedSet&lt;T&gt; — cs.blueprint</title>
+<meta name="description" content="System.Collections.Immutable.ImmutableSortedSet<T> — AVL-tree-backed immutable sorted set. Reference for .NET 10 / C# 14." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&family=IBM+Plex+Serif:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --indigo-500: #4F46E5;  --indigo-600: #3730A3;
+  --indigo-400: #6366F1;  --indigo-300: #818CF8;
+  --indigo-bg:  #EEF2FF;  --indigo-bg-2:#F0F4FF; --indigo-bg-3:#F5F3FF;
+
+  --ns-primitive:    #4F46E5;  --ns-primitive-bg: #EEF2FF;
+  --ns-generic:      #6366F1;  --ns-generic-bg:   #F0F4FF;
+  --ns-legacy:       #818CF8;  --ns-legacy-bg:    #F5F3FF;
+  --ns-concurrent:   #059669;  --ns-concurrent-bg:#F0FDF4;
+  --ns-immutable:    #D97706;  --ns-immutable-bg: #FFF7ED;
+
+  --fg: #111827;  --fg-muted: #6B7280;  --fg-subtle: #9CA3AF;
+  --bg: #FFFFFF;  --bg-soft: #FAFAFA;
+  --border: #E5E7EB; --border-soft: #F3F4F6;
+  --scrim: rgba(17, 24, 39, 0.40);
+
+  --code-bg: #1E1B4B; --code-fg: #E0E7FF;
+  --code-kw: #818CF8; --code-str: #FCD34D; --code-type: #A5B4FC;
+  --code-cmt: #6B7280; --code-num: #F9A8D4;
+
+  --r-sm: 4px; --r-md: 8px; --r-lg: 12px;
+  --sans: "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --serif: "IBM Plex Serif", Georgia, serif;
+
+  --sb-w: 220px; --topbar-h: 52px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fg: #E5E7EB; --fg-muted: #9CA3AF; --fg-subtle: #6B7280;
+    --bg: #0B0B10; --bg-soft: #111119;
+    --border: #1F2028; --border-soft: #171822;
+    --scrim: rgba(0, 0, 0, 0.60);
+    --indigo-bg: #1E1B4B; --indigo-bg-2: #1B1A3A; --indigo-bg-3: #201A3E;
+    --ns-primitive-bg: #1E1B4B; --ns-generic-bg: #1B1A3A; --ns-legacy-bg: #201A3E;
+    --ns-concurrent-bg: #0F2A20; --ns-immutable-bg: #2A1E0F;
+    --code-bg: #0F0E26;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--sans); font-weight: 400; font-size: 14px; line-height: 1.7;
+  color: var(--fg); background: var(--bg);
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+}
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; border: 0; background: none; padding: 0; cursor: pointer; color: inherit; }
+
+.topbar {
+  display: none; position: sticky; top: 0; z-index: 30;
+  height: var(--topbar-h); padding: 0 16px;
+  background: var(--bg); border-bottom: 0.5px solid var(--border);
+  align-items: center; gap: 12px;
+}
+.topbar .brand-mini { display: flex; align-items: center; gap: 10px; }
+.topbar .brand-mini .mono {
+  width: 26px; height: 26px; display: grid; place-items: center;
+  font-family: var(--mono); font-size: 13px; font-weight: 500;
+  color: var(--indigo-500); background: var(--indigo-bg);
+  border-radius: var(--r-sm); letter-spacing: -0.02em;
+}
+.topbar .brand-mini .name {
+  font-family: var(--sans); font-weight: 300; font-size: 18px; letter-spacing: -0.02em;
+}
+.menu-btn {
+  width: 36px; height: 36px; display: grid; place-items: center;
+  border-radius: var(--r-sm); color: var(--fg-muted);
+  transition: background 120ms, color 120ms;
+}
+.menu-btn:hover { background: var(--bg-soft); color: var(--fg); }
+.menu-btn svg { width: 18px; height: 18px; display: block; }
+
+.scrim {
+  display: none; position: fixed; inset: 0;
+  background: var(--scrim); z-index: 20;
+  opacity: 0; transition: opacity 180ms ease;
+}
+.scrim.show { opacity: 1; }
+
+.app { display: grid; grid-template-columns: var(--sb-w) 1fr; min-height: 100vh; }
+
+.sidebar {
+  position: fixed; top: 0; left: 0; bottom: 0;
+  width: var(--sb-w);
+  border-right: 0.5px solid var(--border);
+  background: var(--bg); overflow-y: auto;
+  padding: 20px 0 72px; z-index: 25;
+  transition: transform 220ms cubic-bezier(.22, .61, .36, 1);
+}
+.brand {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 20px 20px;
+}
+.brand .mono {
+  width: 28px; height: 28px; display: grid; place-items: center;
+  font-family: var(--mono); font-size: 13px; font-weight: 500;
+  color: var(--indigo-500); background: var(--indigo-bg);
+  border-radius: var(--r-sm); letter-spacing: -0.02em;
+}
+.brand .name { font-family: var(--sans); font-weight: 300; font-size: 20px; letter-spacing: -0.02em; }
+.sidebar .close-btn {
+  display: none; position: absolute; top: 18px; right: 14px;
+  width: 30px; height: 30px; place-items: center;
+  border-radius: var(--r-sm); color: var(--fg-muted);
+}
+.sidebar .close-btn:hover { background: var(--bg-soft); color: var(--fg); }
+.sidebar .close-btn svg { width: 16px; height: 16px; }
+
+.nav-group { padding: 0 12px; margin-top: 18px; }
+.nav-label {
+  font-family: var(--mono); font-size: 10px; font-weight: 400;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--fg-subtle); padding: 0 8px 6px;
+  display: flex; align-items: center; gap: 6px;
+}
+.dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; flex: none; }
+.dot.primitive { background: var(--ns-primitive); }
+.dot.generic { background: var(--ns-generic); }
+.dot.legacy { background: var(--ns-legacy); }
+.dot.concurrent { background: var(--ns-concurrent); }
+.dot.immutable { background: var(--ns-immutable); }
+
+.nav-list { list-style: none; margin: 0; padding: 0; }
+.nav-item a {
+  display: block; padding: 5px 8px;
+  font-family: var(--mono); font-size: 12px;
+  color: var(--fg-muted);
+  border-radius: var(--r-sm);
+  transition: background 120ms, color 120ms;
+}
+.nav-item a:hover { color: var(--fg); background: var(--bg-soft); }
+.nav-item.active a {
+  color: var(--indigo-500); background: var(--indigo-bg); font-weight: 500;
+}
+@media (prefers-color-scheme: dark) { .nav-item.active a { color: var(--indigo-300); } }
+
+.side-footer {
+  position: absolute; bottom: 16px; left: 20px; right: 20px;
+  font-family: var(--serif); font-style: italic; font-weight: 300;
+  font-size: 11px; color: var(--fg-subtle); line-height: 1.5;
+}
+
+.main {
+  grid-column: 2; padding: 56px 48px 80px;
+  display: flex; justify-content: center;
+}
+.content { width: 100%; max-width: 760px; }
+
+.hero { margin-bottom: 28px; }
+.badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.badge {
+  font-family: var(--mono); font-size: 10px; font-weight: 400;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 999px;
+  border: 0.5px solid var(--border);
+  color: var(--fg-muted); background: var(--bg-soft);
+}
+.badge.ns-generic    { color: var(--ns-generic);    background: var(--ns-generic-bg);    border-color: transparent; }
+.badge.ns-primitive  { color: var(--ns-primitive);  background: var(--ns-primitive-bg);  border-color: transparent; }
+.badge.ns-legacy     { color: var(--ns-legacy);     background: var(--ns-legacy-bg);     border-color: transparent; }
+.badge.ns-concurrent { color: var(--ns-concurrent); background: var(--ns-concurrent-bg); border-color: transparent; }
+.badge.ns-immutable  { color: var(--ns-immutable);  background: var(--ns-immutable-bg);  border-color: transparent; }
+.badge.ok            { color: var(--ns-concurrent); background: var(--ns-concurrent-bg); border-color: transparent; }
+.badge.warn          { color: var(--ns-immutable);  background: var(--ns-immutable-bg);  border-color: transparent; }
+
+.display {
+  font-family: var(--mono); font-weight: 400;
+  font-size: 28px; letter-spacing: -0.02em;
+  color: var(--fg); margin: 0 0 8px; line-height: 1.25;
+}
+.hero-lead {
+  font-family: var(--sans); font-size: 14px;
+  color: var(--fg-muted); margin: 0; max-width: 62ch;
+}
+
+.metrics {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 10px; margin: 24px 0 28px;
+}
+.metric {
+  border: 0.5px solid var(--border); border-radius: var(--r-lg);
+  padding: 14px 16px; background: var(--bg);
+}
+.metric .label {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--fg-subtle);
+}
+.metric .value {
+  font-family: var(--mono); font-size: 18px;
+  color: var(--fg); margin-top: 4px;
+}
+.metric .note {
+  font-family: var(--serif); font-style: italic; font-weight: 300;
+  font-size: 12px; color: var(--fg-muted); margin-top: 2px;
+}
+
+section { margin-bottom: 32px; }
+h2.section-title {
+  font-family: var(--sans); font-weight: 500;
+  font-size: 15px; color: var(--fg);
+  margin: 0 0 10px; letter-spacing: -0.01em;
+}
+
+.when-use {
+  font-family: var(--serif); font-style: italic; font-weight: 300;
+  font-size: 14px; color: var(--fg-muted); line-height: 1.7;
+  border-left: 3px solid var(--ns-immutable);
+  padding: 2px 0 2px 14px; margin: 0;
+}
+
+.code {
+  background: var(--code-bg); color: var(--code-fg);
+  border-radius: var(--r-lg);
+  padding: 16px 18px; overflow-x: auto;
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.7;
+}
+.code .kw { color: var(--code-kw); }
+.code .ty { color: var(--code-type); }
+.code .str { color: var(--code-str); }
+.code .num { color: var(--code-num); }
+.code .cmt { color: var(--code-cmt); font-style: italic; }
+pre { margin: 0; }
+
+.table-wrap {
+  border: 0.5px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden; overflow-x: auto;
+}
+table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 480px; }
+thead th {
+  text-align: left;
+  font-family: var(--mono); font-size: 10px; font-weight: 400;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--fg-subtle); padding: 10px 14px;
+  background: var(--bg-soft);
+  border-bottom: 0.5px solid var(--border);
+  white-space: nowrap;
+}
+tbody td { padding: 10px 14px; border-bottom: 0.5px solid var(--border-soft); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+td.mono, th.mono { font-family: var(--mono); font-size: 12px; color: var(--fg); white-space: nowrap; }
+td.desc { font-family: var(--sans); color: var(--fg-muted); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  font-family: var(--mono); font-size: 12px;
+  padding: 5px 10px; border-radius: 999px;
+  border: 0.5px solid var(--border);
+  color: var(--fg-muted); background: var(--bg);
+  transition: color 120ms, border-color 120ms; cursor: pointer;
+}
+.chip:hover { color: var(--indigo-500); border-color: var(--indigo-300); }
+
+.callout {
+  border: 0.5px solid var(--border);
+  border-left: 3px solid var(--ns-immutable);
+  border-radius: var(--r-lg);
+  padding: 12px 14px; background: var(--bg);
+}
+.callout .title {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ns-immutable); margin-bottom: 4px;
+}
+.callout .body {
+  font-family: var(--serif); font-weight: 300; font-style: italic;
+  font-size: 13px; color: var(--fg-muted); line-height: 1.7;
+}
+
+@media (max-width: 1100px) { .main { padding: 48px 36px 80px; } }
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  .main { grid-column: 1; padding: 24px 22px 60px; }
+  .topbar { display: flex; }
+  .sidebar { transform: translateX(-100%); width: min(84vw, 280px); }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar .close-btn { display: grid; }
+  .scrim.show { display: block; }
+  .side-footer { position: static; margin-top: 20px; padding: 0 20px; }
+}
+@media (max-width: 560px) {
+  .metrics { grid-template-columns: 1fr; }
+  .display { font-size: 24px; }
+  .main { padding: 20px 16px 48px; }
+  .code { padding: 14px; font-size: 12px; }
+}
+</style>
+</head>
+<body>
+
+<header class="topbar" role="banner">
+  <button class="menu-btn" id="menuOpen" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+      <path d="M4 7h16M4 12h16M4 17h16"/>
+    </svg>
+  </button>
+  <a class="brand-mini" href="../index.html">
+    <div class="mono">C#</div>
+    <div class="name">cs.blueprint</div>
+  </a>
+</header>
+
+<div class="scrim" id="scrim" aria-hidden="true"></div>
+
+<div class="app">
+
+  <aside class="sidebar" id="sidebar" aria-label="Primary">
+    <button class="close-btn" id="menuClose" aria-label="Close navigation">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M6 6l12 12M18 6L6 18"/>
+      </svg>
+    </button>
+
+    <a class="brand" href="../index.html">
+      <div class="mono">C#</div>
+      <div class="name">cs.blueprint</div>
+    </a>
+
+    <div class="nav-group">
+      <div class="nav-label"><span class="dot primitive"></span>Array / Span / Memory</div>
+      <ul class="nav-list">
+        <li class="nav-item"><a href="arrays.html">Array</a></li>
+        <li class="nav-item"><a href="span.html">Span&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="memory.html">Memory&lt;T&gt;</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label"><span class="dot generic"></span>System.Collections.Generic</div>
+      <ul class="nav-list">
+        <li class="nav-item"><a href="list.html">List&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="linkedlist.html">LinkedList&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="stack.html">Stack&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="queue.html">Queue&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="priority-queue.html">PriorityQueue&lt;T,P&gt;</a></li>
+        <li class="nav-item"><a href="../index.html">Dictionary&lt;K,V&gt;</a></li>
+        <li class="nav-item"><a href="sorted-dictionary.html">SortedDictionary&lt;K,V&gt;</a></li>
+        <li class="nav-item"><a href="sorted-list.html">SortedList&lt;K,V&gt;</a></li>
+        <li class="nav-item"><a href="hashset.html">HashSet&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="sorted-set.html">SortedSet&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="observable-collection.html">ObservableCollection&lt;T&gt;</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label"><span class="dot legacy"></span>System.Collections (legacy)</div>
+      <ul class="nav-list">
+        <li class="nav-item"><a href="arraylist.html">ArrayList</a></li>
+        <li class="nav-item"><a href="hashtable.html">Hashtable</a></li>
+        <li class="nav-item"><a href="legacy-stack.html">Stack</a></li>
+        <li class="nav-item"><a href="legacy-queue.html">Queue</a></li>
+        <li class="nav-item"><a href="legacy-sorted-list.html">SortedList</a></li>
+        <li class="nav-item"><a href="bitarray.html">BitArray</a></li>
+        <li class="nav-item"><a href="string-collection.html">StringCollection</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label"><span class="dot concurrent"></span>System.Collections.Concurrent</div>
+      <ul class="nav-list">
+        <li class="nav-item"><a href="concurrent-dictionary.html">ConcurrentDictionary</a></li>
+        <li class="nav-item"><a href="concurrent-queue.html">ConcurrentQueue&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="concurrent-stack.html">ConcurrentStack&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="concurrent-bag.html">ConcurrentBag&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="blocking-collection.html">BlockingCollection&lt;T&gt;</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label"><span class="dot immutable"></span>System.Collections.Immutable</div>
+      <ul class="nav-list">
+        <li class="nav-item"><a href="immutable-array.html">ImmutableArray&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="immutable-list.html">ImmutableList&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="immutable-dictionary.html">ImmutableDictionary</a></li>
+        <li class="nav-item"><a href="immutable-sorted-dictionary.html">ImmutableSortedDictionary</a></li>
+        <li class="nav-item"><a href="immutable-hashset.html">ImmutableHashSet&lt;T&gt;</a></li>
+        <li class="nav-item active"><a href="immutable-sorted-set.html">ImmutableSortedSet&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="immutable-queue.html">ImmutableQueue&lt;T&gt;</a></li>
+        <li class="nav-item"><a href="immutable-stack.html">ImmutableStack&lt;T&gt;</a></li>
+      </ul>
+    </div>
+
+    <div class="side-footer">
+      Based on MS Learn<br/>
+      .NET 10 · C# 14
+    </div>
+  </aside>
+
+  <main class="main">
+    <article class="content">
+
+      <header class="hero">
+        <div class="badges">
+          <span class="badge ns-immutable">System.Collections.Immutable</span>
+          <span class="badge">Since .NET Framework 4.5</span>
+          <span class="badge ok">Immutable</span>
+          <span class="badge ok">Thread-safe</span>
+          <span class="badge ok">Structural sharing</span>
+          <span class="badge">Unique &amp; ordered</span>
+          <span class="badge">Indexable</span>
+        </div>
+        <h1 class="display">ImmutableSortedSet&lt;T&gt;</h1>
+        <p class="hero-lead">
+          An immutable set of unique values kept in comparer-defined order, backed by a self-balancing AVL tree. Combines the deterministic iteration of SortedSet, the persistent-snapshot semantics of the Immutable family, and one unique capability absent from ImmutableHashSet — positional index access in O(log n).
+        </p>
+      </header>
+
+      <div class="metrics" aria-label="Complexity">
+        <div class="metric">
+          <div class="label">Contains</div>
+          <div class="value">O(log n)</div>
+          <div class="note">tree descent by comparer</div>
+        </div>
+        <div class="metric">
+          <div class="label">Add</div>
+          <div class="value">O(log n)</div>
+          <div class="note">rebuild spine, share nodes</div>
+        </div>
+        <div class="metric">
+          <div class="label">Remove</div>
+          <div class="value">O(log n)</div>
+          <div class="note">rebuild spine, rebalance</div>
+        </div>
+      </div>
+
+      <section>
+        <h2 class="section-title">When to use</h2>
+        <p class="when-use">
+          Use ImmutableSortedSet when set membership must evolve over time and enumeration order must be stable — versioned leaderboards, interval sets in concurrent rule engines, tag sets that ship to logs, any audit-visible snapshot of unique values. For unordered immutable sets, ImmutableHashSet is leaner. For single-threaded ordered sets without revision needs, SortedSet&lt;T&gt; is faster.
+        </p>
+      </section>
+
+      <section>
+        <div class="callout">
+          <div class="title">Unique immutable capabilities</div>
+          <div class="body">
+            Unlike ImmutableHashSet, this set offers <code style="font-family:var(--mono);font-size:12px;">Min</code>, <code style="font-family:var(--mono);font-size:12px;">Max</code>, an integer indexer over its sorted contents, and <code style="font-family:var(--mono);font-size:12px;">IndexOf</code>. Position in the set is meaningful — the third smallest element is cheap to retrieve. Useful for percentile reporting, bounded-window audits, and top-K style consumers built on an immutable snapshot.
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="section-title">Example</h2>
+        <div class="code"><pre><span class="cmt">// Construct — collection expression, factory, or LINQ suffix</span>
+<span class="ty">ImmutableSortedSet</span>&lt;<span class="kw">int</span>&gt; scores = [<span class="num">88</span>, <span class="num">72</span>, <span class="num">95</span>, <span class="num">91</span>];
+<span class="ty">ImmutableSortedSet</span>&lt;<span class="ty">string</span>&gt; empty = <span class="ty">ImmutableSortedSet</span>&lt;<span class="ty">string</span>&gt;.Empty;
+
+<span class="cmt">// Enumeration is sorted — 72, 88, 91, 95</span>
+<span class="kw">foreach</span> (<span class="kw">var</span> n <span class="kw">in</span> scores)
+    <span class="ty">Console</span>.WriteLine(n);
+
+<span class="cmt">// Min / Max — first-class and cheap</span>
+<span class="kw">int</span> lowest  = scores.Min;                  <span class="cmt">// 72</span>
+<span class="kw">int</span> highest = scores.Max;                  <span class="cmt">// 95</span>
+
+<span class="cmt">// Positional access — O(log n)</span>
+<span class="kw">int</span> third = scores[<span class="num">2</span>];                     <span class="cmt">// 91</span>
+<span class="kw">int</span> idx   = scores.IndexOf(<span class="num">88</span>);            <span class="cmt">// 1</span>
+
+<span class="cmt">// Mutations return a new set — original untouched</span>
+<span class="ty">ImmutableSortedSet</span>&lt;<span class="kw">int</span>&gt; withHundred = scores.Add(<span class="num">100</span>);
+<span class="ty">ImmutableSortedSet</span>&lt;<span class="kw">int</span>&gt; removed     = scores.Remove(<span class="num">72</span>);
+
+<span class="cmt">// Set algebra — each returns a new immutable set</span>
+<span class="ty">ImmutableSortedSet</span>&lt;<span class="kw">int</span>&gt; a = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>];
+<span class="ty">ImmutableSortedSet</span>&lt;<span class="kw">int</span>&gt; b = [<span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>, <span class="num">6</span>];
+
+<span class="ty">ImmutableSortedSet</span>&lt;<span class="kw">int</span>&gt; u   = a.Union(b);             <span class="cmt">// { 1, 2, 3, 4, 5, 6 }</span>
+<span class="ty">ImmutableSortedSet</span>&lt;<span class="kw">int</span>&gt; i   = a.Intersect(b);         <span class="cmt">// { 3, 4 }</span>
+<span class="ty">ImmutableSortedSet</span>&lt;<span class="kw">int</span>&gt; d   = a.Except(b);            <span class="cmt">// { 1, 2 }</span>
+<span class="ty">ImmutableSortedSet</span>&lt;<span class="kw">int</span>&gt; sym = a.SymmetricExcept(b);   <span class="cmt">// { 1, 2, 5, 6 }</span>
+
+<span class="cmt">// Efficient batch construction via a Builder</span>
+<span class="ty">ImmutableSortedSet</span>&lt;<span class="kw">int</span>&gt;.Builder builder =
+    <span class="ty">ImmutableSortedSet</span>.CreateBuilder&lt;<span class="kw">int</span>&gt;();
+<span class="kw">for</span> (<span class="kw">int</span> n = <span class="num">0</span>; n &lt; <span class="num">1_000</span>; n++) builder.Add(n);
+<span class="ty">ImmutableSortedSet</span>&lt;<span class="kw">int</span>&gt; sealed = builder.ToImmutable();
+
+<span class="cmt">// Descending order via reversed comparer</span>
+<span class="ty">ImmutableSortedSet</span>&lt;<span class="kw">int</span>&gt; desc = <span class="ty">ImmutableSortedSet</span>
+    .Create&lt;<span class="kw">int</span>&gt;(<span class="ty">Comparer</span>&lt;<span class="kw">int</span>&gt;.Create((x, y) =&gt; y.CompareTo(x)))
+    .Union(scores);
+
+<span class="cmt">// Reverse enumeration — top to bottom</span>
+<span class="kw">foreach</span> (<span class="kw">var</span> n <span class="kw">in</span> scores.Reverse())
+    <span class="ty">Console</span>.WriteLine(n);             <span class="cmt">// 95, 91, 88, 72</span></pre></div>
+      </section>
+
+      <section>
+        <h2 class="section-title">Properties</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Property</th><th>Type</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="mono">Count</td><td class="mono">int</td><td class="desc">Number of elements — O(1).</td></tr>
+              <tr><td class="mono">IsEmpty</td><td class="mono">bool</td><td class="desc">True when the set has no elements.</td></tr>
+              <tr><td class="mono">Min</td><td class="mono">T</td><td class="desc">Smallest element by the comparer. O(log n).</td></tr>
+              <tr><td class="mono">Max</td><td class="mono">T</td><td class="desc">Largest element by the comparer. O(log n).</td></tr>
+              <tr><td class="mono">KeyComparer</td><td class="mono">IComparer&lt;T&gt;</td><td class="desc">Comparer that defines sort order. Defaults to <code style="font-family:var(--mono);font-size:12px;">Comparer&lt;T&gt;.Default</code>.</td></tr>
+              <tr><td class="mono">this[int]</td><td class="mono">T</td><td class="desc">Element at the given position in sorted order. O(log n) — not O(1).</td></tr>
+              <tr><td class="mono">Empty</td><td class="mono">ImmutableSortedSet&lt;T&gt;</td><td class="desc">Static readonly — the canonical empty instance.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="section-title">Methods</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Method</th><th>Signature</th><th>Complexity</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="mono">Add</td><td class="mono">Add(T item) → ImmutableSortedSet&lt;T&gt;</td><td class="mono">O(log n)</td></tr>
+              <tr><td class="mono">Remove</td><td class="mono">Remove(T item) → ImmutableSortedSet&lt;T&gt;</td><td class="mono">O(log n)</td></tr>
+              <tr><td class="mono">Clear</td><td class="mono">Clear() → ImmutableSortedSet&lt;T&gt;</td><td class="mono">O(1)</td></tr>
+              <tr><td class="mono">Contains</td><td class="mono">Contains(T item) → bool</td><td class="mono">O(log n)</td></tr>
+              <tr><td class="mono">TryGetValue</td><td class="mono">TryGetValue(T equal, out T actual) → bool</td><td class="mono">O(log n)</td></tr>
+              <tr><td class="mono">IndexOf</td><td class="mono">IndexOf(T item) → int</td><td class="mono">O(log n)</td></tr>
+              <tr><td class="mono">Reverse</td><td class="mono">Reverse() → IEnumerable&lt;T&gt;</td><td class="mono">O(1) / O(n) full</td></tr>
+              <tr><td class="mono">Union</td><td class="mono">Union(IEnumerable&lt;T&gt;) → ImmutableSortedSet&lt;T&gt;</td><td class="mono">O(k log n)</td></tr>
+              <tr><td class="mono">Intersect</td><td class="mono">Intersect(IEnumerable&lt;T&gt;) → ImmutableSortedSet&lt;T&gt;</td><td class="mono">O((n + k) log n)</td></tr>
+              <tr><td class="mono">Except</td><td class="mono">Except(IEnumerable&lt;T&gt;) → ImmutableSortedSet&lt;T&gt;</td><td class="mono">O(k log n)</td></tr>
+              <tr><td class="mono">SymmetricExcept</td><td class="mono">SymmetricExcept(IEnumerable&lt;T&gt;) → ImmutableSortedSet&lt;T&gt;</td><td class="mono">O((n + k) log n)</td></tr>
+              <tr><td class="mono">IsSubsetOf</td><td class="mono">IsSubsetOf(IEnumerable&lt;T&gt;) → bool</td><td class="mono">O((n + k) log n)</td></tr>
+              <tr><td class="mono">IsSupersetOf</td><td class="mono">IsSupersetOf(IEnumerable&lt;T&gt;) → bool</td><td class="mono">O(k log n)</td></tr>
+              <tr><td class="mono">IsProperSubsetOf</td><td class="mono">IsProperSubsetOf(IEnumerable&lt;T&gt;) → bool</td><td class="mono">O((n + k) log n)</td></tr>
+              <tr><td class="mono">IsProperSupersetOf</td><td class="mono">IsProperSupersetOf(IEnumerable&lt;T&gt;) → bool</td><td class="mono">O((n + k) log n)</td></tr>
+              <tr><td class="mono">Overlaps</td><td class="mono">Overlaps(IEnumerable&lt;T&gt;) → bool</td><td class="mono">O(k log n)</td></tr>
+              <tr><td class="mono">SetEquals</td><td class="mono">SetEquals(IEnumerable&lt;T&gt;) → bool</td><td class="mono">O((n + k) log n)</td></tr>
+              <tr><td class="mono">WithComparer</td><td class="mono">WithComparer(IComparer&lt;T&gt;?) → ImmutableSortedSet&lt;T&gt;</td><td class="mono">O(n log n)</td></tr>
+              <tr><td class="mono">ToBuilder</td><td class="mono">ToBuilder() → ImmutableSortedSet&lt;T&gt;.Builder</td><td class="mono">O(1)</td></tr>
+              <tr><td class="mono">GetEnumerator</td><td class="mono">GetEnumerator() → Enumerator</td><td class="mono">O(1) / O(n) full</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="section-title">Comparer recipes</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Goal</th><th>Comparer</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="mono">Default ascending</td><td class="desc">Omit — uses <code style="font-family:var(--mono);font-size:12px;">Comparer&lt;T&gt;.Default</code>.</td></tr>
+              <tr><td class="mono">Descending</td><td class="desc">Pass a reversed comparer — <code style="font-family:var(--mono);font-size:12px;">Comparer&lt;T&gt;.Create((a,b) =&gt; b.CompareTo(a))</code>.</td></tr>
+              <tr><td class="mono">Byte-ordered strings</td><td class="desc"><code style="font-family:var(--mono);font-size:12px;">StringComparer.Ordinal</code> for predictable audit output.</td></tr>
+              <tr><td class="mono">Case-insensitive</td><td class="desc"><code style="font-family:var(--mono);font-size:12px;">StringComparer.OrdinalIgnoreCase</code>.</td></tr>
+              <tr><td class="mono">Custom type</td><td class="desc">Implement <code style="font-family:var(--mono);font-size:12px;">IComparable&lt;T&gt;</code> or pass <code style="font-family:var(--mono);font-size:12px;">IComparer&lt;T&gt;</code>.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="section-title">ImmutableSortedSet vs alternatives</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Aspect</th><th>ImmutableSortedSet&lt;T&gt;</th><th>ImmutableHashSet&lt;T&gt;</th><th>SortedSet&lt;T&gt;</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="mono">Backing</td><td class="desc">AVL balanced tree.</td><td class="desc">Hash-array-mapped trie.</td><td class="desc">Red-black tree.</td></tr>
+              <tr><td class="mono">Contains</td><td class="desc">O(log n)</td><td class="desc">O(log n), practically constant.</td><td class="desc">O(log n)</td></tr>
+              <tr><td class="mono">Add / remove</td><td class="desc">O(log n) — returns a new set.</td><td class="desc">O(log n) — returns a new set.</td><td class="desc">O(log n) — mutates.</td></tr>
+              <tr><td class="mono">Ordering</td><td class="desc">Comparer-sorted, stable.</td><td class="desc">Arbitrary.</td><td class="desc">Comparer-sorted.</td></tr>
+              <tr><td class="mono">Index by position</td><td class="desc">Yes — <code style="font-family:var(--mono);font-size:12px;">this[int]</code>, <code style="font-family:var(--mono);font-size:12px;">IndexOf</code>.</td><td class="desc">No.</td><td class="desc">No.</td></tr>
+              <tr><td class="mono">Min / Max</td><td class="desc">First-class O(log n).</td><td class="desc">Requires a full scan — O(n).</td><td class="desc">First-class O(log n).</td></tr>
+              <tr><td class="mono">Revision history</td><td class="desc">Every version stands.</td><td class="desc">Every version stands.</td><td class="desc">Destructive.</td></tr>
+              <tr><td class="mono">Best for</td><td class="desc">Revision-aware ordered sets.</td><td class="desc">Revision-aware unordered sets.</td><td class="desc">Single-threaded ordered sets.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="section-title">Related structures</h2>
+        <div class="chips">
+          <a class="chip" href="immutable-hashset.html">ImmutableHashSet&lt;T&gt;</a>
+          <a class="chip" href="sorted-set.html">SortedSet&lt;T&gt;</a>
+          <a class="chip" href="immutable-sorted-dictionary.html">ImmutableSortedDictionary</a>
+          <a class="chip" href="immutable-list.html">ImmutableList&lt;T&gt;</a>
+          <a class="chip" href="sorted-list.html">SortedList&lt;K,V&gt;</a>
+        </div>
+      </section>
+
+    </article>
+  </main>
+</div>
+
+<script>
+(function () {
+  const sb = document.getElementById('sidebar');
+  const scrim = document.getElementById('scrim');
+  const openB = document.getElementById('menuOpen');
+  const closeB = document.getElementById('menuClose');
+  function open()  { sb.classList.add('open'); scrim.classList.add('show'); openB.setAttribute('aria-expanded','true'); document.body.style.overflow='hidden'; }
+  function close() { sb.classList.remove('open'); scrim.classList.remove('show'); openB.setAttribute('aria-expanded','false'); document.body.style.overflow=''; }
+  openB.addEventListener('click', open);
+  closeB.addEventListener('click', close);
+  scrim.addEventListener('click', close);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+  sb.querySelectorAll('.nav-item a').forEach(a => a.addEventListener('click', () => {
+    if (window.matchMedia('(max-width: 900px)').matches) close();
+  }));
+})();
+</script>
+
+</body>
+</html>
